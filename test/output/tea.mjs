@@ -18,17 +18,15 @@ const _range = (start, end, inc, map = i => i) => {
     return array
 }
 
-const _at = (source, key) => {
-    if (typeof key === "string" || key >= 0) {
-        return source[key]
-    }
-    return source[source.length + key]
+import fetch from "node-fetch"
+const source = {
+a: _range(0, 10, 1),
+b: 12,
+c: 14
 }
-
-const nope = 2
-const wat = _range(0, 10, nope, (x) => x ** 2)
-const min = 2
-const other = _range(5, min, 1)
-console.log(_at(wat,-2))
-console.log(wat)
-console.log(other)
+const {a, ...rest} = source
+const [a1, a2, a3, ...aRest] = a
+console.log(a)
+console.log(rest)
+console.log(a1, a2, a3)
+console.log(aRest)

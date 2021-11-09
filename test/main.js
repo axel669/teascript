@@ -33,9 +33,9 @@ catch (err) {
         // new Error(err)
         err
     )
-    if (err.location !== undefined) {
-        console.log(err.location)
-    }
+    // if (err.location !== undefined) {
+    //     console.log(err.location)
+    // }
     // throw err
     // if (err.location === undefined) {
     //     console.error(err)

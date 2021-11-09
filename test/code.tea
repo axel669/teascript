@@ -1,13 +1,17 @@
-let nope = 2
-let wat = [x ** 2 from x : 0 -> 10 by nope]
-let min = 2
-let other = [5 -> min]
+import fetch from "node-fetch"
 
-console.log(
-    wat[-2]
-)
-console.log(wat)
-console.log(other)
+let source = {
+    a [0 -> 10]
+    b 12
+    c 14
+}
+let source -> {a, ...rest}
+let a -> [a1, a2, a3, ...aRest]
+
+console.log(a)
+console.log(rest)
+console.log(a1, a2, a3)
+console.log(aRest)
 
 // fn test {
 //     arg n = 0

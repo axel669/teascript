@@ -2,34 +2,40 @@
     const tok = (type) =>
         (source) => ({type, ...source})
     const tokenTypes = [
-        "let",
-        "fn",
         "arg",
-        "num",
-        "call",
-        "string",
-        "var",
-        "dotAccess",
-        "parens",
-        "arrayAccess",
-        "slice",
-        "range",
         "array",
-        "return",
-        "new",
-        "if",
-        "binop",
+        "arrayAccess",
+        "arraydest",
         "between",
+        "bool",
+        "binop",
+        "call",
+        "computedKey",
+        "dotAccess",
+        "fn",
+        "for",
+        "if",
+        "import",
+        "let",
+        "new",
+        "num",
+        "null",
+        "objdest",
         "object",
         "pair",
-        "bool",
-        "rangeFor",
-        "for",
-        "null",
-        "void",
-        "unary",
+        "parens",
+        "range",
+        "regex",
+        "return",
+        "slice",
+        "spread",
+        "string",
         "ternary",
-        "computedKey",
+        "throw",
+        "try",
+        "unary",
+        "var",
+        "void",
     ]
     const binOp = (head, tail) => tail.reduce(
         (left, next) => token.binop({
@@ -68,10 +74,15 @@ Instruction "instruction"
     / If
     / For
     / VariableDecl
+    / Throw
+    / Try
+    / Import
     / Expr
 
 Expr "expression"
     = String
+    / Regex
+    / New
     / FunctionDecl
     / Logical
     / Compare
@@ -151,12 +162,12 @@ Parens
 
 Unary
     = op:("!" / "~") "(" _ expr:Expr _ ")" {
-        return token.unary({op, expr})
+        return token.unary({op, expr, func: true})
     }
     / MathUnary
 MathUnary
     = op:"-" "(" _ expr:Expr _ ")" {
-        return token.unary({op, expr})
+        return token.unary({op, expr, func: true})
     }
     / op:("await" / "yield") __s expr:Expr {
         return token.unary({op, expr})
@@ -167,8 +178,51 @@ Ternary
         return token.ternary({condition, t, f})
     }
 
+Throw
+    = "throw" __s expr:Expr {
+        return token.throw({expr})
+    }
+
+Try
+    = "try" __s "{" _l body:Exprs _l handle:Catch _l last:(Finally _l)? "}" {
+        return token.try({
+            body,
+            handle,
+            last: last?.[0],
+        })
+    }
+Catch
+    = "@catch" __s name:Word __s "{" _l body:Exprs _l "}" {
+        return {
+            name,
+            body,
+        }
+    }
+Finally
+    = "@finally" __s "{" _l body:Exprs _l "}" {
+        return body
+    }
+
+Import
+    = source:$("import" __s Word __s "from" __ String) {
+        return token.import({source})
+    }
+    / source:$("import" __s String) {
+        return token.import({source})
+    }
+    / source:$("import" __s "*" __s "as" __s Word __s "from" __s String) {
+        return token.import({source})
+    }
+
 VariableDecl "variable declaration"
-    = "let" __s mut:("mut" __s)? name:Word __s "=" __s value:Expr {
+    = "let" __s mut:("mut" __s)? name:Var __s "=" __s value:Expr {
+        return token.let({
+            name,
+            value,
+            mutable: mut !== null,
+        })
+    }
+    / "let" __s mut:("mut" __s)? value:Expr __ "->" __s name:(ObjDest / ArrayDest) {
         return token.let({
             name,
             value,
@@ -176,12 +230,29 @@ VariableDecl "variable declaration"
         })
     }
 
+ObjDest
+    = "{" _ head:Word tail:(_i Word)* rest:(_i Spread)? _ "}" {
+        const names = list(head, tail, 1)
+        return token.objdest({
+            names,
+            rest: rest?.[1]
+        })
+    }
+ArrayDest
+    = "[" _ head:Word tail:(_i Word)* rest:(_i Spread)? _ "]" {
+        const names = list(head, tail, 1)
+        return token.arraydest({
+            names,
+            rest: rest?.[1]
+        })
+    }
+
 FunctionDecl "function declaration"
-    = wait:("async" __s)? "fn" gen:"*"? __ name:(Word __)? "{" args:(ArgList __) lines:(Exprs __)? "}" {
+    = wait:("async" __s)? "fn" gen:"*"? __ name:(Word __)? "{" args:(_l ArgList)? lines:(_l Exprs)? __ "}" {
         return token.fn({
             name: name?.[0],
-            args: args?.[0],
-            body: lines?.[0],
+            args: args?.[1] ?? [],
+            body: lines?.[1] ?? [],
             wait: wait !== null,
             gen: gen !== null,
         })
@@ -195,30 +266,26 @@ FunctionDecl "function declaration"
         })
     }
 ArgList
-    = named:DestructuredArg {
-        return [named]
+    = "args" __s wat:ArgDest {
+        return wat
     }
-    / pos:PositionalArg+ named:DestructuredArg {
-        return [...pos, named]
+ArgDest
+    = "{" _l head:ArgDef tail:(_l ArgDef)* _l "}" {
+        const names = list(head, tail, 1)
+        return names
     }
-    / PositionalArg+
-    / ""
-PositionalArg
-    = _l "arg" __s name:Word value:(__s "=" __s Expr)? {
-        return {
+ArgDef
+    = name:Word names:(__s "{" WordList _l "}")? {
+        return token.arg({
             name,
-            value: value?.[3]
-        }
+            names: names?.[2]
+        })
     }
-DestructuredArg
-    = _l "arg" __s name:Word __s "{" named:WordList __ "}" {
-        return [name, named]
-    }
-    / _l "arg" __ name:Word __ "{" _ "}" {
-        return name
-    }
-    / _l "arg" __ "{" named:WordList __ "}" {
-        return [null, named]
+    / "{" names:WordList _l "}" {
+        return token.arg({
+            name: null,
+            names
+        })
     }
 WordList
     = list:(_l Word)+ {
@@ -248,7 +315,7 @@ If
 
 For
     = "for" wait:(__s "await")? __s name:Word __s ":" __s range:Range __s "{" __ body:Exprs __ "}" {
-        return token.rangeFor({
+        return token.for({
             name,
             range,
             body,
@@ -263,11 +330,8 @@ For
             wait: wait !== null
         })
     }
-    / "for" wait:(__s "await")? __s "ever" __s "{" __ body:Exprs __ "}" {
-        return token.for({
-            body,
-            wait: wait !== null
-        })
+    / "for" __s "ever" __s "{" __ body:Exprs __ "}" {
+        return token.for({body})
     }
 
 Array
@@ -276,7 +340,7 @@ Array
             items: []
         })
     }
-    / "[" _ head:Expr tail:(("," _ / _l) Expr)* _ "]" {
+    / "[" _ head:(Expr / Spread) tail:(_i (Expr / Spread))* _ "]" {
         return token.array({
             items: list(head, tail, 1)
         })
@@ -302,17 +366,15 @@ Object
         return token.object({pairs})
     }
 Pairs
-    = head:Pair tail:(("," _ / _l) Pair)* {
+    = head:(Pair / Spread) tail:(_i (Pair / Spread))* {
         return list(head, tail, 1)
     }
 Pair
-    = key:PairKey __ value: Expr {
+    = key:PairKey __s value: Expr {
         return token.pair({key, value})
     }
 PairKey
-    = name:Word {
-        return token.var({name})
-    }
+    = Var
     / name:(String / ComputedKey) {
         return name
     }
@@ -321,11 +383,16 @@ ComputedKey
         return token.computedKey({expr})
     }
 
+Spread
+    = "..." expr:Expr {
+        return token.spread({expr})
+    }
+
 LValue "lvalue"
-    = head:Word tail:LValueAccess* {
-        const tok = token.var({name: head})
+    = head:Var tail:LValueAccess* {
+        // const tok = token.var({name: head})
         if (tail === null) {
-            return tok
+            return head
         }
 
         return tail.reduce(
@@ -333,7 +400,7 @@ LValue "lvalue"
                 target,
                 ...next.item
             }),
-            tok
+            head
         )
     }
 LValueAccess
@@ -357,18 +424,16 @@ LValueAccess
     }
 
 Identifier "identifier"
-    = head:(Parens / Array / Word) tail:IdentifierAccess+ {
+    = head:(Parens / Array / Var) tail:IdentifierAccess+ {
         return tail.reduce(
             (target, next) => next.type({
                 target,
                 ...next.item
             }),
-            token.var({name: head})
+            head
         )
     }
-    / name:Word {
-        return token.var({name})
-    }
+    / Var
 IdentifierAccess
     = _ optional:"?"? "." name:Word {
         return {
@@ -392,7 +457,7 @@ IdentifierAccess
         return {
             type: token.call,
             item: {
-                args,
+                args: args ?? [],
                 optional: optional !== null,
             }
         }
@@ -407,7 +472,7 @@ IdentifierAccess
         }
     }
 Args
-    = pos:PositionalArgs ("," _ / _l) named:NamedArgs {
+    = pos:PositionalArgs _i named:NamedArgs {
         return [...pos, named]
     }
     / named:NamedArgs {
@@ -415,18 +480,26 @@ Args
     }
     / PositionalArgs
 PositionalArgs
-    = head:Expr tail:(("," _ / _l) Expr)* {
+    = head:Expr tail:(_i Expr)* {
         return list(head, tail, 1)
     }
 NamedArgs
-    = head:NamedArg tail:(("," _ / _l) NamedArg)* {
+    = head:NamedArg tail:(_i NamedArg)* {
         return token.object({
             pairs: list(head, tail, 1)
         })
     }
 NamedArg
     = ":" key:Word _s value:Expr {
-        return token.pair({key, value})
+        return token.pair({
+            key: token.var({name: key}),
+            value
+        })
+    }
+
+New
+    = "&" expr:Expr {
+        return token.new({expr})
     }
 
 Number "number"
@@ -468,6 +541,11 @@ EscapeSeq
     / "{{"
     / "}}"
 
+Regex
+    = def:$("/" (EscapeSeq / [^\\/])+ "/" [a-z]*) {
+        return token.regex({def})
+    }
+
 Range
     = start:Expr _ "->" _ end:Expr inc:(__ "by" __ Expr)? {
         return token.range({
@@ -485,15 +563,14 @@ BottomValue
     = "null" {return token.null()}
     / "void" {return token.void()}
 
+Var
+    = name:Word {
+        return token.var({name})
+    }
+
 Comment
     = $("/*" (!"*/" .)* "*/")
     / $("//" (!"\n" .)*)
-    // = comment:$("/*" (!"*/" .)* "*/") {
-    //     return token.comment({comment})
-    // }
-    // / comment:$("//" (!"\n" .)*) {
-    //     return token.comment({comment})
-    // }
 
 Word
     = $([a-zA-Z] [a-zA-Z0-9_\$]*)
@@ -502,6 +579,10 @@ Hex "hex"
     = [a-fA-F0-9]
 Digit "decimal"
     = [0-9]
+
+_i "item separator"
+    = "," _
+    / _l
 
 __ "whitespace"
     = ([ \t\n\r]+ / Comment)+
