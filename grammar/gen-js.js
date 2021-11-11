@@ -2,20 +2,23 @@ const generateCode = (source) => {
     const topLevel = new Set()
     const tokenf = {
         "arg": (token, pos) => {
-            const {name, names} = token
+            const {name, names, value} = token
             if (name === null) {
-                return `const ${tokenf.destruct(token)} = _args[${pos}];`
+                return `const ${tokenf.objdest(token)} = _args[${pos}] ?? {};`
             }
 
             const source = `const ${name} = _args[${pos}]`
             if (names !== undefined) {
                 const full = [
-                    source,
-                    `const ${tokenf.destruct(token)} = ${name}`
+                    `${source} ?? {}`,
+                    `const ${tokenf.objdest(token)} = ${name}`
                 ]
                 return full.join("\n")
             }
 
+            if (value !== undefined) {
+                return `${source} ?? ${genJS(value)}`
+            }
             return source
         },
         "array": token => {
@@ -45,14 +48,27 @@ const generateCode = (source) => {
         "arraydest": token => {
             const { names, rest } = token
 
+            const named = genJS(names)
             const parts = rest === undefined
-                ? names
+                ? named
                 : [
-                    ...names,
+                    ...named,
                     genJS(rest)
                 ]
 
             return `[${parts.join(", ")}]`
+        },
+        "as": token => `${token.source}: ${token.name}`,
+        "assign": token => {
+            const {left, right, op, dest} = token
+
+            const l = genJS(left)
+            const r = genJS(right)
+            if (dest === true) {
+                return `;(${l} ${op} ${r});`
+            }
+
+            return `${l} ${op} ${r}`
         },
         "binop": token => {
             const {left, right, op} = token
@@ -66,11 +82,22 @@ const generateCode = (source) => {
 
             return `${genJS(target)}${op}(${genJS(args).join(", ")})`
         },
+        "do": token => {
+            const {body} = token
+
+            return `(function(){${genJS(body).join("\n")}}())`
+        },
         "dotAccess": token => {
             const {name, target, optional} = token
             const op = optional ? "?." : "."
 
             return `${genJS(target)}${op}${name}`
+        },
+        "export": token => {
+            const {def, expr} = token
+
+            const mod = def ? "default " : ""
+            return `export ${mod}${genJS(expr)}`
         },
         "fn": token => {
             const {name, args, body, wait, gen} = token
@@ -80,7 +107,7 @@ const generateCode = (source) => {
             const argList = genJS(args).join("\n")
             const bodyCode = genJS(body).join("\n")
 
-            const funcName = `${sync}function${generate} ${name}`
+            const funcName = `${sync}function${generate} ${name ?? ""}`.trim()
             const funcBody = [argList, bodyCode].join("\n").trim()
 
             return `${funcName} (..._args) {\n${funcBody}\n}`
@@ -140,10 +167,11 @@ const generateCode = (source) => {
         "objdest": token => {
             const { names, rest } = token
 
+            const named = genJS(names)
             const parts = rest === undefined
-                ? names
+                ? named
                 : [
-                    ...names,
+                    ...named,
                     genJS(rest)
                 ]
 
@@ -171,10 +199,12 @@ const generateCode = (source) => {
             const keyExpr = (key.type === "string") ? key : key.expr
             return `[${genJS(keyExpr)}]: ${genJS(value)}`
         },
+        "parens": token => `(${genJS(token.value)})`,
         "regex": token => {
             return token.def
         },
         "return": token => `return ${genJS(token.expr)}`,
+        "shorthand": token => token.name,
         "slice": token => {
             const {target, range, optional} = token
             const {start, end} = range
@@ -197,6 +227,14 @@ const generateCode = (source) => {
             )
 
             return `\`${jsParts.join("")}\``
+        },
+        "ternary": token => {
+            const {condition, t, f} = token
+            const cond = genJS(condition)
+            const tru = genJS(t)
+            const fals = genJS(f)
+
+            return `(${cond} ? ${tru} : ${fals})`
         },
         "throw": token => `throw ${genJS(token.expr)}`,
         "try": token => {

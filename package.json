@@ -1,18 +1,31 @@
 {
   "name": "@axel669/teascript",
-  "version": "0.1.0",
+  "version": "0.20.0",
   "description": "",
   "main": "main.js",
   "scripts": {
+    "compile:grammar": "peggy -o parser.js grammar/teascript.peggy",
     "test:module": "node test/module.mjs",
     "run:module": "node test/output/tea.mjs"
+  },
+  "bin": {
+    "tea": "cli.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "peggy": "^1.2.0"
+    "@babel/parser": "^7.16.3",
+    "fs-extra": "^10.0.0",
+    "peggy": "^1.2.0",
+    "prettier": "^2.4.1"
   },
   "devDependencies": {
     "node-fetch": "2"
-  }
+  },
+  "files": [
+    "funcs/",
+    "grammar/",
+    "cli.js",
+    "parser.js"
+  ]
 }

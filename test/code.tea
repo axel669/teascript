@@ -1,38 +1,48 @@
-import fetch from "node-fetch"
+fn arraydest {
+    args {
+        {
+            names
+            rest
+        }
+    }
 
-let source = {
-    a [0 -> 10]
-    b 12
-    c 14
+    let parts = do {
+        let temp = genJS(names)
+        if rest == void
+            => temp
+        => [...temp, genJS(rest)]
+    }
+
+    => "[{parts.join(", ")}]"
 }
-let source -> {a, ...rest}
-let a -> [a1, a2, a3, ...aRest]
 
-console.log(a)
-console.log(rest)
-console.log(a1, a2, a3)
-console.log(aRest)
-
-// fn test {
-//     arg n = 0
-
-//     if n < 2
-//         => n - 1
-//     if n == 100
-//         => {wat "woah"}
-//     if n == 10
-//         => {nope "wat"}
+// let self = this
+// fn* test {
+//     args {
+//         n = 0
+//     }
 
 //     if n == 0 {
 //         console.log("wat")
 //         => -10
 //     }
+//     if n == 100 {
+//         console.log(self)
+//         => {wat "woah"}
+//     }
+//     if n == 10
+//         => {nope "wat"}
+
+//     if n < 2
+//         => n - 1
 
 //     => n ** 2
 // }
 
-// for x : 0 -> 10 {
-//     (test)(x)
+// for x : 0 -> 11 {
+//     console.log(
+//         test(x)
+//     )
 // }
 
 // let array = [0 -> 100]

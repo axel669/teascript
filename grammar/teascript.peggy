@@ -6,12 +6,16 @@
         "array",
         "arrayAccess",
         "arraydest",
+        "as",
+        "assign",
         "between",
         "bool",
         "binop",
         "call",
         "computedKey",
+        "do",
         "dotAccess",
+        "export",
         "fn",
         "for",
         "if",
@@ -27,6 +31,7 @@
         "range",
         "regex",
         "return",
+        "shorthand",
         "slice",
         "spread",
         "string",
@@ -77,6 +82,8 @@ Instruction "instruction"
     / Throw
     / Try
     / Import
+    / Export
+    / Assignment
     / Expr
 
 Expr "expression"
@@ -89,8 +96,10 @@ Expr "expression"
     / Math
     / Unary
     / Ternary
+    / NullCoalesce
     / Boolean
     / BottomValue
+    / Do
     / Identifier
     / Number
     / Object
@@ -174,8 +183,38 @@ MathUnary
     }
 
 Ternary
-    = "?" "(" condition:Expr _l t:Expr _l f:Expr _ ")" {
+    = "?" "(" _ condition:Expr _ ")" __ t:TrueCase {
+        return token.ternary({
+            condition,
+            t,
+            f: token.null(),
+        })
+    }
+    / "?" "(" _ condition:Expr _ ")" __ f:FalseCase {
+        return token.ternary({
+            condition,
+            f,
+            t: token.null(),
+        })
+    }
+    / "?" "(" _ condition:Expr _ ")" __ t:TrueCase __ f:FalseCase {
         return token.ternary({condition, t, f})
+    }
+    / "?" "(" _ condition:Expr _ ")" __ f:FalseCase __ t:TrueCase {
+        return token.ternary({condition, t, f})
+    }
+TrueCase
+    = "=" __s value:Expr {return value}
+FalseCase
+    = ":" __s value:Expr {return value}
+
+NullCoalesce
+    = "??" "(" _ left:Expr __ ":" __ right:Expr _ ")" {
+        return token.binop({
+            left,
+            right,
+            op: "??",
+        })
     }
 
 Throw
@@ -204,7 +243,10 @@ Finally
     }
 
 Import
-    = source:$("import" __s Word __s "from" __ String) {
+    = source:$("import" __s Word (_ "," __s Destruct)? __s "from" __s String) {
+        return token.import({source})
+    }
+    / source:$("import" __s Destruct __s "from" __s String) {
         return token.import({source})
     }
     / source:$("import" __s String) {
@@ -212,6 +254,17 @@ Import
     }
     / source:$("import" __s "*" __s "as" __s Word __s "from" __s String) {
         return token.import({source})
+    }
+
+Export
+    = "export" __s expr:(VariableDecl / FunctionDecl / Object) {
+        return token.export({expr})
+    }
+    / "export" __s "default" __s expr:Expr {
+        return token.export({
+            def: true,
+            expr,
+        })
     }
 
 VariableDecl "variable declaration"
@@ -230,22 +283,49 @@ VariableDecl "variable declaration"
         })
     }
 
-ObjDest
-    = "{" _ head:Word tail:(_i Word)* rest:(_i Spread)? _ "}" {
+Destruct
+    = "{" _ head:(As / Var) tail:(_i (As / Var))* rest:(_i Spread)? _ "}" {
         const names = list(head, tail, 1)
         return token.objdest({
             names,
             rest: rest?.[1]
         })
     }
+As
+    = source:Word __s "as" __s name:Word {
+        return token.as({source, name})
+    }
+ObjDest
+    = "{" _ head:ObjDestructEntry tail:(_i ObjDestructEntry)* rest:(_i Spread)? _ "}" {
+        const names = list(head, tail, 1)
+        return token.objdest({
+            names,
+            rest: rest?.[1]
+        })
+    }
+ObjDestructEntry
+    = left:As __s op:"=" __s right:Expr {
+        return token.assign({left, right, op})
+    }
+    / left:Var __s op:"=" __s right:Expr {
+        return token.assign({left, right, op})
+    }
+    / As
+    / Var
+
 ArrayDest
-    = "[" _ head:Word tail:(_i Word)* rest:(_i Spread)? _ "]" {
+    = "[" _ head:ArrayDestructEntry tail:(_i ArrayDestructEntry)* rest:(_i Spread)? _ "]" {
         const names = list(head, tail, 1)
         return token.arraydest({
             names,
             rest: rest?.[1]
         })
     }
+ArrayDestructEntry
+    = left:Var __s op:"=" __s right:Expr {
+        return token.assign({left, right, op})
+    }
+    / Var
 
 FunctionDecl "function declaration"
     = wait:("async" __s)? "fn" gen:"*"? __ name:(Word __)? "{" args:(_l ArgList)? lines:(_l Exprs)? __ "}" {
@@ -266,31 +346,44 @@ FunctionDecl "function declaration"
         })
     }
 ArgList
-    = "args" __s wat:ArgDest {
-        return wat
-    }
-ArgDest
-    = "{" _l head:ArgDef tail:(_l ArgDef)* _l "}" {
-        const names = list(head, tail, 1)
-        return names
+    = "args" __s "{" _l head:ArgDef tail:(_l ArgDef)* _l "}" {
+        return list(head, tail, 1)
     }
 ArgDef
-    = name:Word names:(__s "{" WordList _l "}")? {
+    = ArgDefault
+    / name:Word __s "{" names:(_l (OptionDefault / Var))+ _l "}" {
         return token.arg({
             name,
-            names: names?.[2]
+            names: names.map(n => n[1]),
         })
     }
-    / "{" names:WordList _l "}" {
+    / name:Word {
+        return token.arg({name})
+    }
+    / "{" names:(_l (OptionDefault / Var))+ _l "}" {
         return token.arg({
             name: null,
-            names
+            names: names.map(n => n[1]),
         })
     }
-WordList
-    = list:(_l Word)+ {
-        return list.map(item => item[1])
+ArgDefault
+    = name:Word __s "=" __s value:Expr {
+        return token.arg({name, value})
     }
+OptionDefault
+    = left:Var __s "=" __s right:Expr {
+        return token.binop({
+            left,
+            right,
+            op: "=",
+        })
+    }
+
+Do
+    = "do" __s "{" _ body:Exprs _ "}" {
+        return token.do({body})
+    }
+
 Return
     = ("return" / "=>") __s expr:Expr {
         return token.return({expr})
@@ -366,7 +459,7 @@ Object
         return token.object({pairs})
     }
 Pairs
-    = head:(Pair / Spread) tail:(_i (Pair / Spread))* {
+    = head:(Pair / Spread / Shorthand) tail:(_i (Pair / Spread / Shorthand))* {
         return list(head, tail, 1)
     }
 Pair
@@ -388,9 +481,32 @@ Spread
         return token.spread({expr})
     }
 
+Shorthand
+    = "." name:Word {
+        return token.shorthand({name})
+    }
+
+AssignmentOp
+    = "="
+    / "+=" / "-="
+    / "*=" / "/=" / "%="
+    / "**="
+    / "<<=" / ">>="
+    / "<<<=" / ">>>="
+Assignment
+    = left:LValue __s op:AssignmentOp __s right:Expr {
+        return token.assign({left, right, op})
+    }
+    / left:(ArrayDest / ObjDest) __s op:"=" __s right:Expr {
+        return token.assign({
+            dest:true,
+            left,
+            right,
+            op,
+        })
+    }
 LValue "lvalue"
     = head:Var tail:LValueAccess* {
-        // const tok = token.var({name: head})
         if (tail === null) {
             return head
         }
@@ -424,7 +540,7 @@ LValueAccess
     }
 
 Identifier "identifier"
-    = head:(Parens / Array / Var) tail:IdentifierAccess+ {
+    = head:(Array / Var) tail:IdentifierAccess+ {
         return tail.reduce(
             (target, next) => next.type({
                 target,
@@ -511,7 +627,7 @@ Number "number"
     / num:$("-"? Digit+ "." Digit+)
 String "string"
     = value:$('""') {
-        return token.string({value})
+        return token.string({value: ""})
     }
     / '"' parts:(Interpolation / StringPart)+ '"' {
         if (parts.length === 1 && typeof(parts[0]) === "string") {
