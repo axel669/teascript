@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require("fs-extra")
+const path = require("path")
 
 const prettier = require("prettier")
 
@@ -20,7 +21,13 @@ const transpile = async (source) => {
     const topLevelFuncs = await Promise.all(
         Array.from(
             topLevel,
-            (name) => fs.readFile(`funcs/${name}.js`, "utf8")
+            (name) => fs.readFile(
+                path.resolve(
+                    __dirname,
+                    `funcs/${name}.js`
+                ),
+                "utf8"
+            )
         )
     )
     const output = [...topLevelFuncs, ...js].join("\n")
