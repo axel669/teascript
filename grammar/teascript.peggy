@@ -13,6 +13,7 @@
         "binop",
         "call",
         "computedKey",
+        "delete",
         "do",
         "dotAccess",
         "export",
@@ -20,6 +21,7 @@
         "for",
         "if",
         "import",
+        "instance",
         "let",
         "new",
         "num",
@@ -29,6 +31,7 @@
         "pair",
         "parens",
         "range",
+        "reactive",
         "regex",
         "return",
         "shorthand",
@@ -38,6 +41,7 @@
         "ternary",
         "throw",
         "try",
+        "typeof",
         "unary",
         "var",
         "void",
@@ -63,18 +67,25 @@
     )
 }
 
-Program "program"
-    = _ exprs:Exprs? _l?
-        {return exprs ?? []}
+Program "top level"
+    = _ expr:(Reactive / Statement) tail:(_l (Reactive / Statement))* _ {
+        return [
+            expr,
+            ...tail.map(i => i[1])
+        ]
+    }
+    / _ {
+        return []
+    }
 Exprs "expression group"
-    = expr:Instruction tail:(_l Instruction)* {
+    = expr:Statement tail:(_l Statement)* {
         return [
             expr,
             ...tail.map(i => i[1])
         ]
     }
 
-Instruction "instruction"
+Statement "statement"
     = Return
     / If
     / For
@@ -84,16 +95,18 @@ Instruction "instruction"
     / Import
     / Export
     / Assignment
+    / Delete
     / Expr
 
 Expr "expression"
-    = String
-    / Regex
+    = Regex
     / New
     / FunctionDecl
     / Logical
     / Compare
     / Math
+    / StatusOp
+    // / Pipeline
     / Unary
     / Ternary
     / NullCoalesce
@@ -101,6 +114,7 @@ Expr "expression"
     / BottomValue
     / Do
     / Identifier
+    / String
     / Number
     / Object
     / Array
@@ -109,11 +123,12 @@ Expr "expression"
 ComparableValue
     = Math
     / Number
-    / String
     / Boolean
     / BottomValue
     / Unary
+    / StatusOp
     / Identifier
+    / String
     / Parens
 
 MathValue
@@ -121,6 +136,23 @@ MathValue
     / Identifier
     / MathUnary
     / Parens
+
+Reactive
+    = "$:" __s expr:Statement {
+        return token.reactive({expr})
+    }
+
+StatusOp
+    = "typeof" "{" _ expr:Expr _ "}" {
+        return token.typeof({expr})
+    }
+    / "instance" "<" target:Identifier ">" "{" _ expr:Expr _ "}" {
+        return token.instance({expr, target})
+    }
+Delete
+    = "delete" "{" _ expr:Expr _ "}" {
+        return token.delete({expr})
+    }
 
 BinaryNumberOp
     = ">>>" / "<<<"
@@ -163,6 +195,9 @@ Logical
         }
         return binOp(head, tail)
     }
+
+// Pipeline
+//     = "(" _ expr:Expr
 
 Parens
     = "(" _ value:Expr _ ")" {
@@ -267,18 +302,18 @@ Export
         })
     }
 
-VariableDecl "variable declaration"
-    = "let" __s mut:("mut" __s)? name:Var __s "=" __s value:Expr {
-        return token.let({
-            name,
-            value,
-            mutable: mut !== null,
-        })
+VariableCreation
+    = name:Var __s ("=" / "<-") __s value:Expr {
+        return {name, value}
     }
-    / "let" __s mut:("mut" __s)? value:Expr __ "->" __s name:(ObjDest / ArrayDest) {
+    / value:Expr __ "->" __s name:(ObjDest / ArrayDest) {
+        return {name, value}
+    }
+
+VariableDecl "variable declaration"
+    = "let" __s mut:("mut" __s)? info:VariableCreation {
         return token.let({
-            name,
-            value,
+            ...info,
             mutable: mut !== null,
         })
     }
@@ -304,10 +339,10 @@ ObjDest
         })
     }
 ObjDestructEntry
-    = left:As __s op:"=" __s right:Expr {
+    = left:As __s op:("=" / "<-") __s right:Expr {
         return token.assign({left, right, op})
     }
-    / left:Var __s op:"=" __s right:Expr {
+    / left:Var __s op:("=" / "<-") __s right:Expr {
         return token.assign({left, right, op})
     }
     / As
@@ -328,55 +363,34 @@ ArrayDestructEntry
     / Var
 
 FunctionDecl "function declaration"
-    = wait:("async" __s)? "fn" gen:"*"? __ name:(Word __)? "{" args:(_l ArgList)? lines:(_l Exprs)? __ "}" {
+    = wait:("async" __s)? "fn" gen:"*"? __ name:(Word __)? "{" args:ArgList? lines:(_l Exprs)? __ "}" {
         return token.fn({
+            args: args,
             name: name?.[0],
-            args: args?.[1] ?? [],
             body: lines?.[1] ?? [],
             wait: wait !== null,
             gen: gen !== null,
         })
     }
-    / wait:("async" __s)? "fn" gen:"*"? __ arg:Word __ "=>" __ body:Expr {
+    / wait:("async" __s)? "fn" gen:"*"? args:ShortArgList __ "=>" __ body:Expr {
         return token.fn({
-            arg,
+            short: true,
+            args,
             body,
             wait: wait !== null,
             gen: gen !== null,
         })
     }
+
 ArgList
-    = "args" __s "{" _l head:ArgDef tail:(_l ArgDef)* _l "}" {
-        return list(head, tail, 1)
-    }
-ArgDef
-    = ArgDefault
-    / name:Word __s "{" names:(_l (OptionDefault / Var))+ _l "}" {
+    = args:(_l "@" (VariableCreation / Var))+ {
         return token.arg({
-            name,
-            names: names.map(n => n[1]),
+            args: args.map(arg => arg[2])
         })
     }
-    / name:Word {
-        return token.arg({name})
-    }
-    / "{" names:(_l (OptionDefault / Var))+ _l "}" {
-        return token.arg({
-            name: null,
-            names: names.map(n => n[1]),
-        })
-    }
-ArgDefault
-    = name:Word __s "=" __s value:Expr {
-        return token.arg({name, value})
-    }
-OptionDefault
-    = left:Var __s "=" __s right:Expr {
-        return token.binop({
-            left,
-            right,
-            op: "=",
-        })
+ShortArgList
+    = "{" _ head:Var tail:("," _ Var)* _ "}" {
+        return list(head, tail, 2)
     }
 
 Do
@@ -467,12 +481,14 @@ Pair
         return token.pair({key, value})
     }
 PairKey
-    = Var
-    / name:(String / ComputedKey) {
+    = ":" name:Var {
+        return name
+    }
+    / ":" name:(String / ComputedKey) {
         return name
     }
 ComputedKey
-    = "$(" _ expr:Expr _ ")" {
+    = ":(" _ expr:Expr _ ")" {
         return token.computedKey({expr})
     }
 
@@ -488,16 +504,17 @@ Shorthand
 
 AssignmentOp
     = "="
-    / "+=" / "-="
-    / "*=" / "/=" / "%="
-    / "**="
-    / "<<=" / ">>="
-    / "<<<=" / ">>>="
+    / "<-"
+    // / "+=" / "-="
+    // / "*=" / "/=" / "%="
+    // / "**="
+    // / "<<=" / ">>="
+    // / "<<<=" / ">>>="
 Assignment
     = left:LValue __s op:AssignmentOp __s right:Expr {
         return token.assign({left, right, op})
     }
-    / left:(ArrayDest / ObjDest) __s op:"=" __s right:Expr {
+    / left:(ArrayDest / ObjDest) __s op:("=" / "<-") __s right:Expr {
         return token.assign({
             dest:true,
             left,
@@ -540,7 +557,7 @@ LValueAccess
     }
 
 Identifier "identifier"
-    = head:(Array / Var) tail:IdentifierAccess+ {
+    = head:(Array / Var / String) tail:IdentifierAccess+ {
         return tail.reduce(
             (target, next) => next.type({
                 target,
@@ -556,6 +573,15 @@ IdentifierAccess
             type: token.dotAccess,
             item: {
                 name,
+                optional: optional !== null,
+            }
+        }
+    }
+    / optional:"?"? "[" _ range:SliceRange _ "]" {
+        return {
+            type: token.slice,
+            item: {
+                range,
                 optional: optional !== null,
             }
         }
@@ -578,15 +604,6 @@ IdentifierAccess
             }
         }
     }
-    / optional:"?"? "[" range:Range "]" {
-        return {
-            type: token.slice,
-            item: {
-                range,
-                optional: optional !== null,
-            }
-        }
-    }
 Args
     = pos:PositionalArgs _i named:NamedArgs {
         return [...pos, named]
@@ -596,7 +613,7 @@ Args
     }
     / PositionalArgs
 PositionalArgs
-    = head:Expr tail:(_i Expr)* {
+    = head:(Expr / Spread) tail:(_i (Expr / Spread))* {
         return list(head, tail, 1)
     }
 NamedArgs
@@ -612,6 +629,9 @@ NamedArg
             value
         })
     }
+    / ":" key:Word {
+        return token.var({name: key})
+    }
 
 New
     = "&" expr:Expr {
@@ -619,12 +639,27 @@ New
     }
 
 Number "number"
-    = num:$("-"? Digit+) {
+    = num:$("-"? Digit+) "n" {
         return token.num({
-            value: parseInt(num, 10)
+            value: BigInt(num),
+            big: "n",
         })
     }
-    / num:$("-"? Digit+ "." Digit+)
+    / num:$("-"? Digit+ ("." Digit+)? ("e" ("+" / "-")? Digit+)?) {
+        return token.num({
+            value: parseFloat(num, 10)
+        })
+    }
+    / "0x" num:$(Hex+) {
+        return token.num({
+            value: parseInt(num, 16)
+        })
+    }
+    / "0b" num:$(("0" / "1")+) {
+        return token.num({
+            value: parseInt(num, 2)
+        })
+    }
 String "string"
     = value:$('""') {
         return token.string({value: ""})
@@ -663,11 +698,28 @@ Regex
     }
 
 Range
-    = start:Expr _ "->" _ end:Expr inc:(__ "by" __ Expr)? {
+    = start:Expr __ "->" __ end:Expr inc:(__ "by" __ Expr)? {
         return token.range({
             start,
             end,
             by: inc ? inc[3] : token.num({value: 1})
+        })
+    }
+SliceRange
+    = start:Expr __ "->" __ end:Expr {
+        return token.range({
+            start,
+            end,
+        })
+    }
+    / start:Expr __ "->" {
+        return token.range({
+            start,
+        })
+    }
+    / "->" __ end:Expr {
+        return token.range({
+            end,
         })
     }
 
@@ -689,7 +741,7 @@ Comment
     / $("//" (!"\n" .)*)
 
 Word
-    = $([a-zA-Z] [a-zA-Z0-9_\$]*)
+    = $([a-zA-Z\$] [a-zA-Z0-9_\$]*)
 
 Hex "hex"
     = [a-fA-F0-9]

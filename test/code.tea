@@ -1,87 +1,88 @@
-fn arraydest {
-    args {
-        {
-            names
-            rest
+let actions = {
+    :$set fn{current, value} => value
+    :$unset fn {
+        @source
+        @names
+        let dest <- {...source}
+        for name : names {
+            delete{dest[name]}
         }
+        => dest
     }
-
-    let parts = do {
-        let temp = genJS(names)
-        if rest == void
-            => temp
-        => [...temp, genJS(rest)]
-    }
-
-    => "[{parts.join(", ")}]"
+    :$push fn{current, value} => [...current, value]
+    :$append fn{current, value} => [...current, ...value]
+    :$apply fn{current, func} => func(current)
+    :$filter fn{current, condition} => current.filter(condition)
+    :$merge fn{current, value} => {...current, ...value}
 }
 
-// let self = this
-// fn* test {
-//     args {
-//         n = 0
-//     }
+fn copyObject {
+    @source
+    @createIfVoid = false
 
-//     if n == 0 {
-//         console.log("wat")
-//         => -10
-//     }
-//     if n == 100 {
-//         console.log(self)
-//         => {wat "woah"}
-//     }
-//     if n == 10
-//         => {nope "wat"}
+    if Array.isArray(source) == true
+        => [...source]
+    if source == void && createIfVoid == true
+        => {}
+    if typeof{source} != "object" || source == null
+        => source
+    if instance<Map>{source} == true
+        => &Map(source)
+    if instance<Set>{source} == true
+        => &Set(source)
+    if source.constructor != Object
+        => source
+    => {...source}
+}
 
-//     if n < 2
-//         => n - 1
+fn setValues {
+    @info -> {
+        dest
+        key
+        pos
+        value
+        create
+    }
+    let name <- key[pos]
+    if pos == (key.length - 1)
+        => actions[name](dest, value)
+    let next <- copyObject(dest, create)
+    next[name] <- setValues(
+        :dest
+        :key
+        :pos pos + 1
+        :value
+        :create
+    )
+    => next
+}
 
-//     => n ** 2
-// }
+fn splitKey {
+    @key
+    => key.replace(/\.\./g, "\x00")
+        .split(".")
+        .map(
+            fn{name} => name.replace(/\x00/g, ".")
+        )
+}
+fn update {
+    @source
+    @updates
+    @createIfVoid = false
 
-// for x : 0 -> 11 {
-//     console.log(
-//         test(x)
-//     )
-// }
+    => Object.keys(updates)
+        .reduce(
+            fn{source, key} => setValues(
+                :key splitKey(key)
+                :pos 0
+                :dest source
+                :value updates[key]
+                :create createIfVoid
+            )
+            source
+        )
+}
 
-// let array = [0 -> 100]
-// for await num : array {
-//     console.log(num)
-// }
+update.actions <- actions
 
-// [x ** 2 from x : 0 -> 100]
-//     .filter(
-//         async fn* x => x >= 18
-//     )
-// async fn* {
-//     console.log(
-//         await fetch(
-//             "test",
-//             :headers {
-//                 "Content-Type" "text/plain"
-//             }
-//         )
-//         yield thing() + 1
-//     )
-// }
-// let other = {a 10, b 12}
-
-// fetch(
-//     "why"
-//     :headers {
-//         something "cool"
-//     }
-//     //:cors true
-// )
-
-// if !(thing) == false {
-//     console.log(
-//         10 + -(thing)
-//     )
-// }
-
-// let y = ?(wat
-//     nope
-//     maybe()
-// )
+export default update

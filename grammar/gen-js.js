@@ -1,25 +1,48 @@
+const builtin = {
+    bitfunc: [
+        "bitor",
+        "bitand",
+        "bitxor",
+        "bitsl",
+        "bitsr",
+        "bitslf",
+        "bitsrf",
+        "delete",
+        "typeof",
+    ]
+}
+const realOp = {
+    "==": "===",
+    "!=": "!==",
+    "<-": "=",
+}
 const generateCode = (source) => {
     const topLevel = new Set()
+
+    const argLine = (token, index) => {
+        const { type, name, value } = token
+        if (type === "var") {
+            return `const ${name} = _args[${index}]`
+        }
+
+        if (name.type === "var") {
+            return `const ${name.name} = _args[${index}] ?? ${genJS(value)}`
+        }
+
+        const array = (name.type === "arraydest")
+        const def = array ? "[]" : "{}"
+        const source = `const ${value.name} = _args[${index}] ?? ${def}`
+        const names = genJS(name.names).join(", ")
+        const des = array ? `[${names}]` : `{${names}}`
+        return `${source}\nconst ${des} = ${value.name}`
+    }
     const tokenf = {
         "arg": (token, pos) => {
-            const {name, names, value} = token
-            if (name === null) {
-                return `const ${tokenf.objdest(token)} = _args[${pos}] ?? {};`
-            }
-
-            const source = `const ${name} = _args[${pos}]`
-            if (names !== undefined) {
-                const full = [
-                    `${source} ?? {}`,
-                    `const ${tokenf.objdest(token)} = ${name}`
-                ]
-                return full.join("\n")
-            }
-
-            if (value !== undefined) {
-                return `${source} ?? ${genJS(value)}`
-            }
-            return source
+            const argList =
+                token.args
+                    .map(argLine)
+                    .join("\n")
+            return argList
         },
         "array": token => {
             const {items, range, arg, body} = token
@@ -62,25 +85,51 @@ const generateCode = (source) => {
         "assign": token => {
             const {left, right, op, dest} = token
 
+            if (left.type === "arrayAccess") {
+                topLevel.add("_set")
+
+                const target = genJS(left.target)
+                const key = genJS(left.value)
+                const value = genJS(right)
+                return `_set(${target}, ${key}, ${value})`
+            }
+
             const l = genJS(left)
             const r = genJS(right)
             if (dest === true) {
-                return `;(${l} ${op} ${r});`
+                return `;(${l} = ${r});`
             }
 
-            return `${l} ${op} ${r}`
+            return `${l} = ${r}`
         },
         "binop": token => {
             const {left, right, op} = token
 
-            return `${genJS(left)} ${op} ${genJS(right)}`
+            const actualOp = realOp[op] ?? op
+
+            return `${genJS(left)} ${actualOp} ${genJS(right)}`
         },
         "bool": token => token.value.toString(),
         "call": token => {
             const {target, args, optional} = token
             const op = optional ? "?." : ""
 
+            // console.log(
+            //     target.type === "var"
+            //     && builtin.bitfunc.includes(target.name)
+            // )
+
             return `${genJS(target)}${op}(${genJS(args).join(", ")})`
+        },
+        "delete": token => {
+            const {expr} = token
+
+            if (expr.type === "arrayAccess") {
+                const {optional, target, value} = expr
+                const opt = optional ? "?." : ""
+                return `delete(${genJS(target)}${opt}[${genJS(value)}])`
+            }
+            return `delete(${genJS(expr)})`
         },
         "do": token => {
             const {body} = token
@@ -100,14 +149,18 @@ const generateCode = (source) => {
             return `export ${mod}${genJS(expr)}`
         },
         "fn": token => {
-            const {name, args, body, wait, gen} = token
+            const {name, args, body, wait, gen, short} = token
             const sync = wait ? "async " : ""
             const generate = gen ? "*" : ""
-
-            const argList = genJS(args).join("\n")
-            const bodyCode = genJS(body).join("\n")
-
             const funcName = `${sync}function${generate} ${name ?? ""}`.trim()
+
+            if (short === true) {
+                const argList = genJS(args).join(", ")
+                return `${funcName}(${argList}){return ${genJS(body)}}`
+            }
+
+            const argList = genJS(args)
+            const bodyCode = genJS(body).join("\n")
             const funcBody = [argList, bodyCode].join("\n").trim()
 
             return `${funcName} (..._args) {\n${funcBody}\n}`
@@ -155,6 +208,8 @@ const generateCode = (source) => {
             return `if (${cond}) {\n${ifBody}\n}`
         },
         "import": token => token.source,
+        "instance": token =>
+            `(${genJS(token.expr)} instanceof ${genJS(token.target)})`,
         "let": token => {
             const word = token.mutable ? "let" : "const"
             const {name, value} = token
@@ -162,7 +217,7 @@ const generateCode = (source) => {
             return `${word} ${genJS(name)} = ${genJS(value)}`
         },
         "new": token => `new ${genJS(token.expr)}`,
-        "num": token => token.value.toString(),
+        "num": token => `${token.value}${token.big ?? ""}`,
         "null": () => "null",
         "objdest": token => {
             const { names, rest } = token
@@ -200,6 +255,7 @@ const generateCode = (source) => {
             return `[${genJS(keyExpr)}]: ${genJS(value)}`
         },
         "parens": token => `(${genJS(token.value)})`,
+        "reactive": token => `$: ${genJS(token.expr)}`,
         "regex": token => {
             return token.def
         },
@@ -210,7 +266,12 @@ const generateCode = (source) => {
             const {start, end} = range
             const op = optional ? "?." : "."
 
-            return `${genJS(target)}${op}slice(${genJS(start)},${genJS(end)})`
+            const args = [start ?? {type: "num", value: 0}, end]
+                .filter(arg => arg !== undefined)
+                .map(arg => genJS(arg))
+                .join(", ")
+
+            return `${genJS(target)}${op}slice(${args})`
         },
         "spread": token => `...${genJS(token.expr)}`,
         "string": token => {
@@ -249,6 +310,7 @@ const generateCode = (source) => {
 
             return [tryPart, catchPart, finalPart].join("\n")
         },
+        "typeof": token => `typeof(${genJS(token.expr)})`,
         "unary": token => {
             const {op, expr, func} = token
 

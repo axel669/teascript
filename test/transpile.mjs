@@ -2,10 +2,16 @@ import fs from "fs/promises"
 import { inspect } from "util"
 
 import peggy from "peggy"
+import prettier from "prettier"
 
 import generateCode from "../grammar/gen-js.js"
 
 inspect.defaultOptions.depth = null
+const prettyOptions = {
+    tabWidth: 4,
+    arrowParens: "always",
+    parser: "babel",
+}
 
 export default async () => {
     const parser = peggy.generate(
@@ -26,7 +32,9 @@ export default async () => {
     )
     const output = [...topLevelFuncs, ...js].join("\n")
 
-    console.log(output)
+    const codez = prettier.format(output, prettyOptions)
 
-    return output
+    console.log(codez)
+
+    return codez
 }

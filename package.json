@@ -1,6 +1,6 @@
 {
   "name": "@axel669/teascript",
-  "version": "0.20.0-beta.0",
+  "version": "0.21.0",
   "description": "",
   "main": "main.js",
   "scripts": {
@@ -12,7 +12,7 @@
     "tea": "cli.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@babel/parser": "^7.16.3",
     "fs-extra": "^10.0.0",

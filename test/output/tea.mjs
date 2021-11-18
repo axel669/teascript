@@ -1,9 +1,18 @@
-function arraydest (..._args) {
-const {names, rest} = _args[0] ?? {};
-const parts = (function(){const temp = genJS(names)
-if (rest == undefined) {
-return temp
-}
-return [...temp, genJS(rest)]}())
-return `[${parts.join(", ")}]`
-}
+const _range = (start, end, inc, map = (i) => i) => {
+    if (start > end) {
+        const array_r = [];
+        for (let item = start; item > end; item -= inc) {
+            array_r.push(map(item));
+        }
+        return array_r;
+    }
+
+    const array = [];
+    for (let item = start; item < end; item += inc) {
+        array.push(map(item));
+    }
+    return array;
+};
+
+const nums = _range(0, 10, 1);
+console.log(nums.slice(2), nums.slice(0, -2), nums.slice(2, -1));
