@@ -41,10 +41,13 @@ tea file -d -src:<input dir> -dest:<dest dir>
 
 ## Changelog
 
-### 0.21.1
+### 0.21.2
 + fixed bug with functions that had no args defined
 + changed cli for transpiling files
 + added cli options to run without saving extra files, and transpile dirs
+
+### 0.21.1
++ quick cli fix
 
 ### 0.21.0
 + changed object key to use :
