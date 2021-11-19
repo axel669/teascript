@@ -365,17 +365,17 @@ ArrayDestructEntry
 FunctionDecl "function declaration"
     = wait:("async" __s)? "fn" gen:"*"? __ name:(Word __)? "{" args:ArgList? lines:(_l Exprs)? __ "}" {
         return token.fn({
-            args: args,
+            args: args ?? [],
             name: name?.[0],
             body: lines?.[1] ?? [],
             wait: wait !== null,
             gen: gen !== null,
         })
     }
-    / wait:("async" __s)? "fn" gen:"*"? args:ShortArgList __ "=>" __ body:Expr {
+    / wait:("async" __s)? "fn" gen:"*"? args:ShortArgList? __ "=>" __ body:Expr {
         return token.fn({
             short: true,
-            args,
+            args: args ?? [],
             body,
             wait: wait !== null,
             gen: gen !== null,

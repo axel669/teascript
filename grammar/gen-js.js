@@ -155,11 +155,11 @@ const generateCode = (source) => {
             const funcName = `${sync}function${generate} ${name ?? ""}`.trim()
 
             if (short === true) {
-                const argList = genJS(args).join(", ")
+                const argList = genJS(args ?? []).join(", ")
                 return `${funcName}(${argList}){return ${genJS(body)}}`
             }
 
-            const argList = genJS(args)
+            const argList = (args === null) ? "" : genJS(args)
             const bodyCode = genJS(body).join("\n")
             const funcBody = [argList, bodyCode].join("\n").trim()
 

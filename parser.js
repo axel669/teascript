@@ -524,7 +524,7 @@ function peg$parse(input, options) {
       };
   var peg$f31 = function(wait, gen, name, args, lines) {
           return token.fn({
-              args: args,
+              args: args ?? [],
               name: name?.[0],
               body: lines?.[1] ?? [],
               wait: wait !== null,
@@ -534,7 +534,7 @@ function peg$parse(input, options) {
   var peg$f32 = function(wait, gen, args, body) {
           return token.fn({
               short: true,
-              args,
+              args: args ?? [],
               body,
               wait: wait !== null,
               gen: gen !== null,
@@ -4058,27 +4058,25 @@ function peg$parse(input, options) {
           s3 = null;
         }
         s4 = peg$parseShortArgList();
-        if (s4 !== peg$FAILED) {
-          s5 = peg$parse__();
-          if (s5 !== peg$FAILED) {
-            if (input.substr(peg$currPos, 2) === peg$c54) {
-              s6 = peg$c54;
-              peg$currPos += 2;
-            } else {
-              s6 = peg$FAILED;
-              if (peg$silentFails === 0) { peg$fail(peg$e61); }
-            }
-            if (s6 !== peg$FAILED) {
-              s7 = peg$parse__();
-              if (s7 !== peg$FAILED) {
-                s8 = peg$parseExpr();
-                if (s8 !== peg$FAILED) {
-                  peg$savedPos = s0;
-                  s0 = peg$f32(s1, s3, s4, s8);
-                } else {
-                  peg$currPos = s0;
-                  s0 = peg$FAILED;
-                }
+        if (s4 === peg$FAILED) {
+          s4 = null;
+        }
+        s5 = peg$parse__();
+        if (s5 !== peg$FAILED) {
+          if (input.substr(peg$currPos, 2) === peg$c54) {
+            s6 = peg$c54;
+            peg$currPos += 2;
+          } else {
+            s6 = peg$FAILED;
+            if (peg$silentFails === 0) { peg$fail(peg$e61); }
+          }
+          if (s6 !== peg$FAILED) {
+            s7 = peg$parse__();
+            if (s7 !== peg$FAILED) {
+              s8 = peg$parseExpr();
+              if (s8 !== peg$FAILED) {
+                peg$savedPos = s0;
+                s0 = peg$f32(s1, s3, s4, s8);
               } else {
                 peg$currPos = s0;
                 s0 = peg$FAILED;

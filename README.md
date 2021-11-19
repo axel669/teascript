@@ -17,20 +17,34 @@ npm i @axel669/teascript
 ```
 
 ## Usage
-Currently only basic command line usage for transpiling one file at a time.
+Still no programmatic API, but there is command line stuffs.
 
+### Run Script
 ```
-tea file <input file> <output file>
+tea file -src:<input file>
+```
+### Transpile File
+```
+tea file -src:<input file> -dest:<dest file>
+```
+### Transpile Directory
+```
+tea file -d -src:<input dir> -dest:<dest dir>
 ```
 
 ## TODO
-- add dir transpiling to cli
+- make programmatic API for parsing/generating
 - add pipeline operator
 - undecided
     - await/yield in do
     - turn builtin into requires (probably make as cli flag)
 
 ## Changelog
+
+### 0.21.1
++ fixed bug with functions that had no args defined
++ changed cli for transpiling files
++ added cli options to run without saving extra files, and transpile dirs
 
 ### 0.21.0
 + changed object key to use :
