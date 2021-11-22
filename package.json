@@ -1,8 +1,8 @@
 {
   "name": "@axel669/teascript",
-  "version": "0.21.2",
+  "version": "0.21.3",
   "description": "",
-  "main": "main.js",
+  "main": "compile.js",
   "scripts": {
     "compile:grammar": "peggy -o parser.js grammar/teascript.peggy",
     "test:module": "node test/module.mjs",
@@ -27,6 +27,7 @@
     "funcs/",
     "grammar/",
     "cli.js",
+    "compile.js",
     "parser.js"
   ]
 }

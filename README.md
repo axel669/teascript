@@ -33,13 +33,16 @@ tea file -d -src:<input dir> -dest:<dest dir>
 ```
 
 ## TODO
-- make programmatic API for parsing/generating
 - add pipeline operator
 - undecided
     - await/yield in do
-    - turn builtin into requires (probably make as cli flag)
 
 ## Changelog
+
+### 0.22.3
++ added programmatic API
++ comiler defaults to making require statements for built-in functions
+    + -b/browser option to have functions inlined
 
 ### 0.21.2
 + fixed bug with functions that had no args defined

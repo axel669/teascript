@@ -15,6 +15,16 @@ fn* pal {
     }
 }
 
+try {
+    wat()
+    @catch error {
+        test()
+    }
+    @finally {
+        woah()
+    }
+}
+
 console.log(
     Math.max(
         ...([...pal()]
@@ -23,91 +33,91 @@ console.log(
     )
 )
 
-// let actions = {
-//     :$set fn{current, value} => value
-//     :$unset fn {
-//         @source
-//         @names
-//         let dest <- {...source}
-//         for name : names {
-//             delete{dest[name]}
-//         }
-//         => dest
-//     }
-//     :$push fn{current, value} => [...current, value]
-//     :$append fn{current, value} => [...current, ...value]
-//     :$apply fn{current, func} => func(current)
-//     :$filter fn{current, condition} => current.filter(condition)
-//     :$merge fn{current, value} => {...current, ...value}
-// }
+let actions = {
+    :$set fn{current, value} => value
+    :$unset fn {
+        @source
+        @names
+        let dest <- {...source}
+        for name : names {
+            delete{dest[name]}
+        }
+        => dest
+    }
+    :$push fn{current, value} => [...current, value]
+    :$append fn{current, value} => [...current, ...value]
+    :$apply fn{current, func} => func(current)
+    :$filter fn{current, condition} => current.filter(condition)
+    :$merge fn{current, value} => {...current, ...value}
+}
 
-// fn copyObject {
-//     @source
-//     @createIfVoid = false
+fn copyObject {
+    @source
+    @createIfVoid = false
 
-//     if Array.isArray(source) == true
-//         => [...source]
-//     if source == void && createIfVoid == true
-//         => {}
-//     if typeof{source} != "object" || source == null
-//         => source
-//     if instance<Map>{source} == true
-//         => &Map(source)
-//     if instance<Set>{source} == true
-//         => &Set(source)
-//     if source.constructor != Object
-//         => source
-//     => {...source}
-// }
+    if Array.isArray(source) == true
+        => [...source]
+    if source == void && createIfVoid == true
+        => {}
+    if typeof{source} != "object" || source == null
+        => source
+    if instance<Map>{source} == true
+        => &Map(source)
+    if instance<Set>{source} == true
+        => &Set(source)
+    if source.constructor != Object
+        => source
+    => {...source}
+}
 
-// fn setValues {
-//     @info -> {
-//         dest
-//         key
-//         pos
-//         value
-//         create
-//     }
-//     let name <- key[pos]
-//     if pos == (key.length - 1)
-//         => actions[name](dest, value)
-//     let next <- copyObject(dest, create)
-//     next[name] <- setValues(
-//         :dest
-//         :key
-//         :pos pos + 1
-//         :value
-//         :create
-//     )
-//     => next
-// }
+fn setValues {
+    @info -> {
+        dest
+        key
+        pos
+        value
+        create
+    }
+    let name <- key[pos]
+    if pos == (key.length - 1)
+        => actions[name](dest, value)
+    let next <- copyObject(dest, create)
+    next[name] <- setValues(
+        :dest
+        :key
+        :pos pos + 1
+        :value
+        :create
+    )
+    => next
+}
 
-// fn splitKey {
-//     @key
-//     => key.replace(/\.\./g, "\x00")
-//         .split(".")
-//         .map(
-//             fn{name} => name.replace(/\x00/g, ".")
-//         )
-// }
-// fn update {
-//     @source
-//     @updates
-//     @createIfVoid = false
+fn splitKey {
+    @key
+    => key.replace(/\.\./g, "\x00")
+        .split(".")
+        .map(
+            fn{name} => name.replace(/\x00/g, ".")
+        )
+}
+fn update {
+    @source
+    @updates
+    @createIfVoid = false
 
-//     => Object.keys(updates)
-//         .reduce(
-//             fn{source, key} => setValues(
-//                 :key splitKey(key)
-//                 :pos 0
-//                 :dest source
-//                 :value updates[key]
-//                 :create createIfVoid
-//             )
-//             source
-//         )
-// }
+    => Object.keys(updates)
+        .reduce(
+            fn{source, key} => setValues(
+                :key splitKey(key)
+                :pos 0
+                :dest source
+                :value updates[key]
+                :create createIfVoid
+            )
+            source
+        )
+}
 
-// update.actions <- actions
+update.actions <- actions
 
-// export default update
+export default update
