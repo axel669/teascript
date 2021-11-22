@@ -39,11 +39,11 @@ tea file -d -src:<input dir> -dest:<dest dir>
 
 ## Changelog
 
-### 0.22.4
+### 0.21.4
 + added es6 compiler option to use import statements instead of require for
     builtin funcs
 
-### 0.22.3
+### 0.21.3
 + added programmatic API
 + comiler defaults to making require statements for built-in functions
     + -b/browser option to have functions inlined
