@@ -1,5 +1,18 @@
-import _range from "@axel669/teascript/funcs/_range.js";
-import test from "test";
+const _range = (start, end, inc, map = (i) => i) => {
+    if (start > end) {
+        const array_r = [];
+        for (let item = start; item > end; item -= inc) {
+            array_r.push(map(item));
+        }
+        return array_r;
+    }
+
+    const array = [];
+    for (let item = start; item < end; item += inc) {
+        array.push(map(item));
+    }
+    return array;
+};
 const actions = {
     a: 10,
     b: 12,

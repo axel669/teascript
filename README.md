@@ -39,6 +39,10 @@ tea file -d -src:<input dir> -dest:<dest dir>
 
 ## Changelog
 
+### 0.21.5
++ bugfix for compiler using browser option
++ bugfix for the builtin funcs to be required/imported correctly
+
 ### 0.21.4
 + added es6 compiler option to use import statements instead of require for
     builtin funcs

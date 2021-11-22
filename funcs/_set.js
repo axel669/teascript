@@ -5,3 +5,5 @@ const _set = (source, key, value) => {
     }
     source[source.length + key] = value
 }
+
+module.exports = _set

@@ -1,3 +1,5 @@
+const fs = require("fs-extra")
+const path = require("path")
 const prettier = require("prettier")
 
 const teascript = require("./parser.js")
@@ -33,6 +35,8 @@ const topLevelTransform = async (sources, args) => {
                     `funcs/${name}.js`
                 ),
                 "utf8"
+            ).then(
+                content => content.replace(/^module.+/m, "").trim()
             )
         )
     )

@@ -4,3 +4,5 @@ const _at = (source, key) => {
     }
     return source[source.length + key]
 }
+
+module.exports = _at

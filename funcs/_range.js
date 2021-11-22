@@ -17,3 +17,5 @@ const _range = (start, end, inc, map = i => i) => {
     }
     return array
 }
+
+module.exports = _range
