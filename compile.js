@@ -9,9 +9,17 @@ const prettyOptions = {
     parser: "babel",
 }
 
-const topLevelTransform = async (sources, inBrowser) => {
+const topLevelTransform = async (sources, args) => {
+    const {es6, browser} = args
     const src = [...sources]
-    if (inBrowser !== true) {
+
+    if (es6 === true) {
+        return src.map(
+            src => `import ${src} from "@axel669/teascript/funcs/${src}.js"`
+        )
+    }
+
+    if (browser !== true) {
         return src.map(
             src => `const ${src} = require("@axel669/teascript/funcs/${src}.js")`
         )
@@ -29,13 +37,11 @@ const topLevelTransform = async (sources, inBrowser) => {
         )
     )
 }
-const compile = async (sourceCode, args) => {
-    const { browser } = args
-
+const compile = async (sourceCode, args = {}) => {
     const ast = teascript.parse(sourceCode)
     const [js, topLevel] = generateCode(ast)
 
-    const topLevelFuncs = await topLevelTransform(topLevel, browser)
+    const topLevelFuncs = await topLevelTransform(topLevel, args)
     const output = [...topLevelFuncs, ...js].join("\n")
 
     return [prettier.format(output, prettyOptions), ast]

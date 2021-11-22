@@ -1,4 +1,5 @@
-const _range = require("@axel669/teascript/funcs/_range.js");
+import _range from "@axel669/teascript/funcs/_range.js";
+import test from "test";
 const actions = {
     a: 10,
     b: 12,
