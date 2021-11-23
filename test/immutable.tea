@@ -1,7 +1,18 @@
-let actions <- {
+mut actions <- {
     :a 10
     :b 12
 }
 let arr <- [x ** 2 from x : 0 -> 100]
 
-console.log(arr.join(" "))
+console.log(
+    arr.length
+)
+console.log(
+    arr.join(" ")
+)
+
+let x = "whole string"
+let y = "#{x} woah ${test}"
+let z = "${test} maybe?"
+
+export mut test = 100

@@ -311,10 +311,16 @@ VariableCreation
     }
 
 VariableDecl "variable declaration"
-    = "let" __s mut:("mut" __s)? info:VariableCreation {
+    = "let" __s info:VariableCreation {
         return token.let({
             ...info,
-            mutable: mut !== null,
+            mutable: false,
+        })
+    }
+    / "mut" __s info:VariableCreation {
+        return token.let({
+            ...info,
+            mutable: true,
         })
     }
 
@@ -664,7 +670,7 @@ String "string"
     = value:$('""') {
         return token.string({value: ""})
     }
-    / '"' parts:(Interpolation / StringPart)+ '"' {
+    / '"' parts:StringPart+ '"' {
         if (parts.length === 1 && typeof(parts[0]) === "string") {
             return token.string({
                 value: parts[0]
@@ -672,28 +678,22 @@ String "string"
         }
         return token.string({parts})
     }
-Interpolation
-    = "{" _ expr:Expr _ "}" {
-        return expr
-    }
 StringPart
-    = part:$(EscapeSeq / [^"\{])+ {
-        return part
-            .replace(/\x7b(\x7b)/g, "$1")
-            .replace(/\x7d(\x7d)/g, "$1")
-            .replace(/(\$\x7b)/g, "\\$1")
-    }
-EscapeSeq
-    = "\\" ("u" Hex Hex Hex Hex)
+    = "\\#" {return "#"}
+    / $("\\" ("u" Hex Hex Hex Hex))
     / "\\" ("u" Hex? Hex? Hex?) {
         error("Invalid unicode escape sequence")
     }
-    / "\\" .
-    / "{{"
-    / "}}"
+    / $("\\" .)
+    / "#{" _ expr:Expr _ "}" {
+        return expr
+    }
+    / text:$([^"\\]+) {
+        return text.replace(/\$/g, "\\$")
+    }
 
 Regex
-    = def:$("/" (EscapeSeq / [^\\/])+ "/" [a-z]*) {
+    = def:$("/" ("\\" . / [^\\/])+ "/" [a-z]*) {
         return token.regex({def})
     }
 

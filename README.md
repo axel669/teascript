@@ -39,6 +39,10 @@ tea file -d -src:<input dir> -dest:<dest dir>
 
 ## Changelog
 
+### 0.21.6
++ changed string interpolation syntax
++ changed mutable from "let mut" to just "mut" on declaration
+
 ### 0.21.5
 + bugfix for compiler using browser option
 + bugfix for the builtin funcs to be required/imported correctly
