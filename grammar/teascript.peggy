@@ -38,6 +38,7 @@
         "slice",
         "spread",
         "string",
+        "tag",
         "ternary",
         "throw",
         "try",
@@ -160,7 +161,7 @@ BinaryNumberOp
     / "**"
     / "/" / "*" / "%"
     / "-" / "+"
-    / "|" / "^"
+    / "|" / "^" / "&"
 Math "math operation"
     = head:MathValue tail:(__ BinaryNumberOp __ MathValue)+ {
         const uniqOps = new Set(
@@ -292,14 +293,28 @@ Import
     }
 
 Export
-    = "export" __s expr:(VariableDecl / FunctionDecl / Object) {
+    = "export" __s expr:(VariableDecl / FunctionDecl) {
         return token.export({expr})
+    }
+    / "export" __s items:MultiExport {
+        return token.export({items})
     }
     / "export" __s "default" __s expr:Expr {
         return token.export({
             def: true,
             expr,
         })
+    }
+MultiExport
+    = "{" _ head:ExportItem tail:(_i ExportItem)* _ "}" {
+        return list(head, tail, 1)
+    }
+ExportItem
+    = source:Var __s "as" __s name:Var {
+        return {source, name}
+    }
+    / source:Var {
+        return {source}
     }
 
 VariableCreation
@@ -490,9 +505,10 @@ PairKey
     = ":" name:Var {
         return name
     }
-    / ":" name:(String / ComputedKey) {
+    / ":" name:String {
         return name
     }
+    / ComputedKey
 ComputedKey
     = ":(" _ expr:Expr _ ")" {
         return token.computedKey({expr})
@@ -608,6 +624,12 @@ IdentifierAccess
                 args: args ?? [],
                 optional: optional !== null,
             }
+        }
+    }
+    / "\`" str:String {
+        return {
+            type: token.tag,
+            item: {str}
         }
     }
 Args
@@ -737,8 +759,10 @@ Var
     }
 
 Comment
-    = $("/*" (!"*/" .)* "*/")
-    / $("//" (!"\n" .)*)
+    = $("###" (!"###" .) "###")
+    / $("#" (!"\n" .)*)
+    // = $("/*" (!"*/" .)* "*/")
+    // / $("//" (!"\n" .)*)
 
 Word
     = $([a-zA-Z\$] [a-zA-Z0-9_\$]*)

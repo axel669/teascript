@@ -1,6 +1,9 @@
+let x = "whole string"
 mut actions <- {
     :a 10
     :b 12
+    :"test" "other"
+    :(x) 100
 }
 let arr <- [x ** 2 from x : 0 -> 100]
 
@@ -11,8 +14,15 @@ console.log(
     arr.join(" ")
 )
 
-let x = "whole string"
 let y = "#{x} woah ${test}"
 let z = "${test} maybe?"
 
+tag`"SELECT * FROM #{table}"
+tag`"another one"
+
 export mut test = 100
+export {
+    test as wat
+    other
+    nope as woah
+}

@@ -143,7 +143,16 @@ const generateCode = (source) => {
             return `${genJS(target)}${op}${name}`
         },
         "export": token => {
-            const {def, expr} = token
+            const {def, expr, items} = token
+
+            if (items !== undefined) {
+                const list = items.map(
+                    item => item.name
+                        ? `${genJS(item.source)} as ${genJS(item.name)}`
+                        : genJS(item.source)
+                )
+                return `export {${list.join(", ")}}`
+            }
 
             const mod = def ? "default " : ""
             return `export ${mod}${genJS(expr)}`
@@ -288,6 +297,16 @@ const generateCode = (source) => {
             )
 
             return `\`${jsParts.join("")}\``
+        },
+        "tag": token => {
+            const target = genJS(token.target)
+            const str = genJS(token.str)
+
+            if (str.startsWith("`") === true) {
+                return `${target}${str}`
+            }
+
+            return `${target}\`${str.slice(1, -1)}\``
         },
         "ternary": token => {
             const {condition, t, f} = token

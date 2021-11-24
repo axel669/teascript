@@ -33,11 +33,17 @@ tea file -d -src:<input dir> -dest:<dest dir>
 ```
 
 ## TODO
+- block regex support
 - add pipeline operator
 - undecided
     - await/yield in do
 
 ## Changelog
+
+### 0.21.7
++ changed comments to use `#` instead of `//`
++ fixed bug in parsing computed keys
++ fixed export syntax bug
 
 ### 0.21.6
 + changed string interpolation syntax
