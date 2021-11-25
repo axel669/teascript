@@ -693,7 +693,12 @@ String "string"
         return token.string({value: ""})
     }
     / '"' parts:StringPart+ '"' {
-        if (parts.length === 1 && typeof(parts[0]) === "string") {
+        const simple = (
+            parts.length === 1
+            && typeof(parts[0]) === "string"
+            && parts[0].indexOf("\n") === -1
+        )
+        if (simple === true) {
             return token.string({
                 value: parts[0]
             })
@@ -710,7 +715,7 @@ StringPart
     / "#{" _ expr:Expr _ "}" {
         return expr
     }
-    / text:$([^"\\]+) {
+    / text:$([^"\\#]+) {
         return text.replace(/\$/g, "\\$")
     }
 
@@ -759,7 +764,7 @@ Var
     }
 
 Comment
-    = $("###" (!"###" .) "###")
+    = $("###" (!"###" .*) "###")
     / $("#" (!"\n" .)*)
     // = $("/*" (!"*/" .)* "*/")
     // / $("//" (!"\n" .)*)

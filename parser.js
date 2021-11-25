@@ -258,7 +258,7 @@ function peg$parse(input, options) {
   var peg$c84 = "#";
   var peg$c85 = "\n";
 
-  var peg$r0 = /^[^"\\]/;
+  var peg$r0 = /^[^"\\#]/;
   var peg$r1 = /^[^\\\/]/;
   var peg$r2 = /^[a-z]/;
   var peg$r3 = /^[a-zA-Z$]/;
@@ -359,7 +359,7 @@ function peg$parse(input, options) {
   var peg$e87 = peg$literalExpectation("u", false);
   var peg$e88 = peg$anyExpectation();
   var peg$e89 = peg$literalExpectation("#{", false);
-  var peg$e90 = peg$classExpectation(["\"", "\\"], true, false);
+  var peg$e90 = peg$classExpectation(["\"", "\\", "#"], true, false);
   var peg$e91 = peg$classExpectation(["\\", "/"], true, false);
   var peg$e92 = peg$classExpectation([["a", "z"]], false, false);
   var peg$e93 = peg$literalExpectation("by", false);
@@ -787,7 +787,12 @@ function peg$parse(input, options) {
           return token.string({value: ""})
       };
   var peg$f80 = function(parts) {
-          if (parts.length === 1 && typeof(parts[0]) === "string") {
+          const simple = (
+              parts.length === 1
+              && typeof(parts[0]) === "string"
+              && parts[0].indexOf("\n") === -1
+          )
+          if (simple === true) {
               return token.string({
                   value: parts[0]
               })
@@ -7408,20 +7413,26 @@ function peg$parse(input, options) {
         s4 = peg$FAILED;
       }
       if (s4 !== peg$FAILED) {
+        s5 = [];
         if (input.length > peg$currPos) {
-          s5 = input.charAt(peg$currPos);
+          s6 = input.charAt(peg$currPos);
           peg$currPos++;
         } else {
-          s5 = peg$FAILED;
+          s6 = peg$FAILED;
           if (peg$silentFails === 0) { peg$fail(peg$e88); }
         }
-        if (s5 !== peg$FAILED) {
-          s4 = [s4, s5];
-          s3 = s4;
-        } else {
-          peg$currPos = s3;
-          s3 = peg$FAILED;
+        while (s6 !== peg$FAILED) {
+          s5.push(s6);
+          if (input.length > peg$currPos) {
+            s6 = input.charAt(peg$currPos);
+            peg$currPos++;
+          } else {
+            s6 = peg$FAILED;
+            if (peg$silentFails === 0) { peg$fail(peg$e88); }
+          }
         }
+        s4 = [s4, s5];
+        s3 = s4;
       } else {
         peg$currPos = s3;
         s3 = peg$FAILED;

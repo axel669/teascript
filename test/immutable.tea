@@ -1,28 +1,123 @@
-let x = "whole string"
-mut actions <- {
-    :a 10
-    :b 12
-    :"test" "other"
-    :(x) 100
+fn isPal {
+    @num
+
+    let f = num.toString()
+    let b = f.split("").reverse().join("")
+
+    => f == b
 }
-let arr <- [x ** 2 from x : 0 -> 100]
+
+fn* pal {
+    for a : 999 -> 900 {
+        for b : 999 -> 900 {
+            yield a * b
+        }
+    }
+}
+
+try {
+    wat()
+    @catch error {
+        test()
+    }
+    @finally {
+        woah()
+    }
+}
 
 console.log(
-    arr.length
+    Math.max(
+        ...([...pal()]
+            .filter(isPal)
+        )
+    )
 )
-console.log(
-    arr.join(" ")
-)
 
-let y = "#{x} woah ${test}"
-let z = "${test} maybe?"
-
-tag`"SELECT * FROM #{table}"
-tag`"another one"
-
-export mut test = 100
-export {
-    test as wat
-    other
-    nope as woah
+let actions = {
+    :$set fn{current, value} => value
+    :$unset fn {
+        @source
+        @names
+        let dest <- {...source}
+        for name : names {
+            delete{dest[name]}
+        }
+        => dest
+    }
+    :$push fn{current, value} => [...current, value]
+    :$append fn{current, value} => [...current, ...value]
+    :$apply fn{current, func} => func(current)
+    :$filter fn{current, condition} => current.filter(condition)
+    :$merge fn{current, value} => {...current, ...value}
 }
+
+fn copyObject {
+    @source
+    @createIfVoid = false
+
+    if Array.isArray(source) == true
+        => [...source]
+    if source == void && createIfVoid == true
+        => {}
+    if typeof{source} != "object" || source == null
+        => source
+    if instance<Map>{source} == true
+        => &Map(source)
+    if instance<Set>{source} == true
+        => &Set(source)
+    if source.constructor != Object
+        => source
+    => {...source}
+}
+
+fn setValues {
+    @info -> {
+        dest
+        key
+        pos
+        value
+        create
+    }
+    let name <- key[pos]
+    if pos == (key.length - 1)
+        => actions[name](dest, value)
+    let next <- copyObject(dest, create)
+    next[name] <- setValues(
+        :dest
+        :key
+        :pos pos + 1
+        :value
+        :create
+    )
+    => next
+}
+
+fn splitKey {
+    @key
+    => key.replace(/\.\./g, "\x00")
+        .split(".")
+        .map(
+            fn{name} => name.replace(/\x00/g, ".")
+        )
+}
+fn update {
+    @source
+    @updates
+    @createIfVoid = false
+
+    => Object.keys(updates)
+        .reduce(
+            fn{source, key} => setValues(
+                :key splitKey(key)
+                :pos 0
+                :dest source
+                :value updates[key]
+                :create createIfVoid
+            )
+            source
+        )
+}
+
+update.actions <- actions
+
+export default update

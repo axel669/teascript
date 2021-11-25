@@ -17,7 +17,7 @@ export default async () => {
     const parser = peggy.generate(
         await fs.readFile("grammar/teascript.peggy", "utf8")
     )
-    const code = await fs.readFile("test/immutable.tea", "utf8")
+    const code = await fs.readFile("test/code.tea", "utf8")
 
     const ast = parser.parse(code)
     console.log(ast)
