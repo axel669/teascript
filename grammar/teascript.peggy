@@ -30,10 +30,12 @@
         "object",
         "pair",
         "parens",
+        "pipe",
         "range",
         "reactive",
         "regex",
         "return",
+        "safeguard",
         "shorthand",
         "slice",
         "spread",
@@ -87,8 +89,7 @@ Exprs "expression group"
     }
 
 Statement "statement"
-    = Return
-    / If
+    = If
     / For
     / VariableDecl
     / Throw
@@ -103,11 +104,11 @@ Expr "expression"
     = Regex
     / New
     / FunctionDecl
+    / Pipeline
     / Logical
     / Compare
     / Math
     / StatusOp
-    // / Pipeline
     / Unary
     / Ternary
     / NullCoalesce
@@ -136,6 +137,11 @@ MathValue
     = Number
     / Identifier
     / MathUnary
+    / Parens
+
+PipeValue
+    = FunctionDecl
+    / Identifier
     / Parens
 
 Reactive
@@ -197,8 +203,12 @@ Logical
         return binOp(head, tail)
     }
 
-// Pipeline
-//     = "(" _ expr:Expr
+Pipeline
+    = head:ComparableValue tail:(__ "|>" __s PipeValue)+ {
+        return token.pipe({
+            list: list(head, tail, 3)
+        })
+    }
 
 Parens
     = "(" _ value:Expr _ ")" {
@@ -256,6 +266,24 @@ NullCoalesce
 Throw
     = "throw" __s expr:Expr {
         return token.throw({expr})
+    }
+
+Safeguard
+    = "safeguard" __s "await" __s expr:Expr __s "{" body:(_l Exprs)? _l value:Return __ "}" {
+        return token.safeguard({
+            wait: true,
+            body: body?.[1] ?? [],
+            expr,
+            value,
+        })
+    }
+    / "safeguard" __s expr:Expr __s "{" body:(_l Exprs)? _l value:Return __ "}" {
+        return token.safeguard({
+            wait: false,
+            body: body?.[1] ?? [],
+            expr,
+            value,
+        })
     }
 
 Try
@@ -321,21 +349,41 @@ VariableCreation
     = name:Var __s ("=" / "<-") __s value:Expr {
         return {name, value}
     }
-    / value:Expr __ "->" __s name:(ObjDest / ArrayDest) {
-        return {name, value}
-    }
 
 VariableDecl "variable declaration"
-    = "let" __s info:VariableCreation {
+    = mut:("let" / "mut") __s name:Var __s "<-" __s guard:Safeguard {
         return token.let({
-            ...info,
-            mutable: false,
+            mutable: mut === "mut",
+            name,
+            guard,
         })
     }
-    / "mut" __s info:VariableCreation {
+    / mut:("let" / "mut") __s name:(ObjDest / ArrayDest) __s "<-" __s guard:Safeguard {
+        return token.let({
+            mutable: mut === "mut",
+            name,
+            guard,
+            destruct: true,
+        })
+    }
+    / mut:("let" / "mut") __s info:VariableCreation {
         return token.let({
             ...info,
-            mutable: true,
+            mutable: mut === "mut",
+        })
+    }
+    / mut:("let" / "mut") __s value:Expr __s "->" __s name:(ObjDest / ArrayDest) {
+        return token.let({
+            mutable: mut === "mut",
+            name,
+            value,
+        })
+    }
+    / mut:("let" / "mut") __s name:(ObjDest / ArrayDest) __s "<-" __s value:Expr {
+        return token.let({
+            mutable: mut === "mut",
+            name,
+            value,
         })
     }
 
@@ -384,11 +432,12 @@ ArrayDestructEntry
     / Var
 
 FunctionDecl "function declaration"
-    = wait:("async" __s)? "fn" gen:"*"? __ name:(Word __)? "{" args:ArgList? lines:(_l Exprs)? __ "}" {
+    = wait:("async" __s)? "fn" gen:"*"? __ name:(Word __)? "{" args:ArgList? lines:(_l Exprs)? value:(_l Return)? __ "}" {
         return token.fn({
             args: args ?? [],
             name: name?.[0],
             body: lines?.[1] ?? [],
+            value: value?.[1],
             wait: wait !== null,
             gen: gen !== null,
         })
@@ -424,17 +473,18 @@ Return
         return token.return({expr})
     }
     / ("return" / "=>") {
-        return token.return({})
+        error("Return must have a expression")
     }
 
 If
-    = "if" __s condition:(Logical / Compare) _s "{" __ body:Exprs __ "}" {
+    = ("if" / "guard") __s condition:(Logical / Compare) _s "{" __ body:Exprs _l value:Return __ "}" {
         return token.if({
             condition,
             body,
+            value,
         })
     }
-    / "if" __s condition:(Logical / Compare) _l "=>" __ expr:Expr {
+    / ("if" / "guard") __s condition:(Logical / Compare) _l "=>" __ expr:Expr {
         return token.if({
             condition,
             expr,
@@ -478,7 +528,7 @@ Array
             range
         })
     }
-    / "[" body:Expr __s "from" __s arg:Word __s ":" __s range:Range "]" {
+    / "[" _ body:Expr __ "from" __s arg:Word __s ":" __s range:Range _ "]" {
         return token.array({
             range,
             arg,
@@ -718,6 +768,7 @@ StringPart
     / text:$([^"\\#]+) {
         return text.replace(/\$/g, "\\$")
     }
+    / "#"
 
 Regex
     = def:$("/" ("\\" . / [^\\/])+ "/" [a-z]*) {
@@ -782,12 +833,12 @@ _i "item separator"
     / _l
 
 __ "whitespace"
-    = ([ \t\n\r]+ / Comment)+
+    = ([ \t\n\r]+ / Comment)+ {return null}
 _ "whitespace"
-    = ([ \t\n\r]+ / Comment)*
+    = ([ \t\n\r]+ / Comment)* {return null}
 _s "space"
-    = [ \t]* Comment?
+    = [ \t]* Comment? {return null}
 __s "required space"
-    = [ \t]+ Comment?
+    = [ \t]+ Comment? {return null}
 _l "newline"
-    = (_s ([\n\r]+ / Comment)+ _s)+
+    = (_s ([\n\r]+ / Comment)+ _s)+ {return null}

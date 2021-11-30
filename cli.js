@@ -6,6 +6,7 @@ const path = require("path")
 const glob = require("glob")
 
 const compile = require("./compile.js")
+const {$safe} = require("./safe.js")
 
 const loadCode = async (args) => {
     const sourceCode = await fs.readFile(args.source, "utf8")
@@ -13,11 +14,21 @@ const loadCode = async (args) => {
 }
 const commands = {
     file: async (args) => {
-        const [outputCode] = await loadCode(args)
+        const compileResult = await $safe(loadCode, [args])
+        if (compileResult instanceof Error) {
+            console.error(compileResult)
+            return
+        }
+        const [outputCode] = compileResult
         await fs.outputFile(args.dest, outputCode)
     },
     run: async (args) => {
-        const [outputCode] = await loadCode(args)
+        const compileResult = await $safe(loadCode, [args])
+        if (compileResult instanceof Error) {
+            console.error(compileResult)
+            return
+        }
+        const [outputCode] = compileResult
         const f = new Function(outputCode)
         f()
     },
@@ -34,16 +45,30 @@ const commands = {
                 source.replace(/\.tea$/, ext)
             )
             console.log(file)
-            const [code] = await loadCode({
+            const compileArgs = {
                 ...args,
-                source: file,
-            })
+                source: file
+            }
+            const compileResult = await $safe(loadCode, [compileArgs])
+            if (compileResult instanceof Error) {
+                console.error(compileResult)
+                return
+            }
+
+            const [code] = compileResult
             await fs.outputFile(dest, code)
         }
     },
     debug: async (args) => {
-        const [code, ast] = await loadCode(args)
         require('util').inspect.defaultOptions.depth = null
+
+        const compileResult = await $safe(loadCode, [args])
+        if (compileResult instanceof Error) {
+            console.error(compileResult)
+            return
+        }
+
+        const [code, ast] = compileResult
         console.log(ast)
         console.log(code)
     }
@@ -87,4 +112,13 @@ const cmd = (function() {
     return "file"
 }())
 
-commands[cmd](pargs)
+const main = async () => {
+    try {
+        await commands[cmd](pargs)
+    }
+    catch (err) {
+        console.error(err)
+    }
+}
+
+main()

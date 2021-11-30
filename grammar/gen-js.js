@@ -18,6 +18,12 @@ const realOp = {
 }
 const generateCode = (source) => {
     const topLevel = new Set()
+    let refID = 0
+    const makeRef = () => {
+        refID += 1
+        return `_ref${refID}`
+    }
+    let scope = [[]]
 
     const argLine = (token, index) => {
         const { type, name, value } = token
@@ -132,9 +138,15 @@ const generateCode = (source) => {
             return `delete(${genJS(expr)})`
         },
         "do": token => {
-            const {body} = token
+            scope.unshift([])
+            const body = genJS(token.body).join("\n")
 
-            return `(function(){${genJS(body).join("\n")}}())`
+            const extra = scope[0].map(
+                name => `let ${name} = null`
+            ).join("\n")
+            scope.shift()
+
+            return `(function(){\n${extra}\n${body}\n}())`
         },
         "dotAccess": token => {
             const {name, target, optional} = token
@@ -158,10 +170,12 @@ const generateCode = (source) => {
             return `export ${mod}${genJS(expr)}`
         },
         "fn": token => {
-            const {name, args, body, wait, gen, short} = token
+            const {name, args, body, wait, gen, short, value} = token
             const sync = wait ? "async " : ""
             const generate = gen ? "*" : ""
             const funcName = `${sync}function${generate} ${name ?? ""}`.trim()
+
+            scope.unshift([])
 
             if (short === true) {
                 const argList = genJS(args ?? []).join(", ")
@@ -171,8 +185,14 @@ const generateCode = (source) => {
             const argList = (args === null) ? "" : genJS(args)
             const bodyCode = genJS(body).join("\n")
             const funcBody = [argList, bodyCode].join("\n").trim()
+            const returnValue = value ? genJS(value) : ""
 
-            return `${funcName} (..._args) {\n${funcBody}\n}`
+            const extra = scope[0].map(
+                name => `let ${name} = null`
+            ).join("\n")
+            scope.shift()
+
+            return `${funcName} (..._args) {\n${extra}\n${funcBody}\n${returnValue}\n}`
         },
         "for": token => {
             const {name, body, source, range, wait} = token
@@ -205,7 +225,7 @@ const generateCode = (source) => {
             return `for (${init};${cond};${incr}) {\n${loopVars}\n${loopBody}\n}`
         },
         "if": token => {
-            const {condition, body, expr} = token
+            const {condition, body, expr, value} = token
 
             const cond = genJS(condition)
 
@@ -214,16 +234,29 @@ const generateCode = (source) => {
             }
 
             const ifBody = genJS(body).join("\n")
-            return `if (${cond}) {\n${ifBody}\n}`
+            const ifValue = genJS(value)
+            return `if (${cond}) {\n${ifBody}\n${ifValue}\n}`
         },
         "import": token => token.source,
         "instance": token =>
             `(${genJS(token.expr)} instanceof ${genJS(token.target)})`,
         "let": token => {
             const word = token.mutable ? "let" : "const"
-            const {name, value} = token
+            const {name, value, guard, destruct} = token
 
-            return `${word} ${genJS(name)} = ${genJS(value)}`
+            const varName = genJS(name)
+
+            if (guard !== undefined) {
+                if (destruct === true) {
+                    const ref = makeRef()
+                    const val = tokenf.safeguard(guard, ref)
+                    return `const ${ref} = ${val}\n${word} ${varName} = ${ref}`
+                }
+                const val = tokenf.safeguard(guard, varName)
+                return `${word} ${varName} = ${val}`
+            }
+
+            return `${word} ${varName} = ${genJS(value)}`
         },
         "new": token => `new ${genJS(token.expr)}`,
         "num": token => `${token.value}${token.big ?? ""}`,
@@ -264,11 +297,47 @@ const generateCode = (source) => {
             return `[${genJS(keyExpr)}]: ${genJS(value)}`
         },
         "parens": token => `(${genJS(token.value)})`,
+        "pipe": token => {
+            const {list} = token
+            const ref = makeRef()
+
+            scope[0].push(ref)
+            const sequence = genJS(
+                list.map(
+                    expr => ({
+                        type: "assign",
+                        op: "<-",
+                        left: {type: "var", name: ref},
+                        right: expr
+                    })
+                )
+            ).join(", ")
+            return `(${sequence})`
+        },
         "reactive": token => `$: ${genJS(token.expr)}`,
         "regex": token => {
             return token.def
         },
         "return": token => `return ${genJS(token.expr)}`,
+        "safeguard": (token, ref) => {
+            const {expr, body, value, wait} = token
+
+            const failExprs = [
+                ...genJS(body),
+                genJS(value)
+            ].join("\n")
+            const expression = genJS(expr)
+            const modifier = (wait === true) ? "await " : ""
+            const internalFunc = (wait === true) ? "_safe_async" : "_safe"
+
+            topLevel.add(internalFunc)
+            const wrapperFunc = `function() {return ${expression}}`
+            const valuePart = `${modifier}${internalFunc}(${wrapperFunc})`
+            const failBody = `{\nconst error = ${ref}\n${failExprs}\n}`
+            const fail = `if (${ref} instanceof Error) ${failBody}`
+
+            return `${valuePart}\n${fail}`
+        },
         "shorthand": token => token.name,
         "slice": token => {
             const {target, range, optional} = token
@@ -351,7 +420,12 @@ const generateCode = (source) => {
         return tokenf[ast.type](ast)
     }
 
-    return [genJS(source), topLevel]
+    const generatedCode = genJS(source)
+    const extra = scope[0].map(
+        name => `let ${name} = null`
+    )
+
+    return [[...extra, ...generatedCode], topLevel]
 }
 
 module.exports = generateCode

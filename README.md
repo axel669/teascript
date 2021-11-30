@@ -40,6 +40,17 @@ tea file -d -src:<input dir> -dest:<dest dir>
 
 ## Changelog
 
+### 0.22.0
++ added safeguard keyword
++ added pipeline operator (Hack version)
++ make guard interchangable with if
++ allow direction of destructuring in var creation to go either way
++ allow spaces around array comprehensions, and newline before "from"
++ require returns at the end of if statements
++ force return to have an expression (void allowed)
++ fix bug in string parsing of "#"
++ (hopefully) improved api error reporting
+
 ### 0.21.7
 + changed comments to use `#` instead of `//`
 + fixed bug in parsing computed keys
