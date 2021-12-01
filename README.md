@@ -16,8 +16,14 @@ yarn add @axel669/teascript
 npm i @axel669/teascript
 ```
 
-## Usage
-Still no programmatic API, but there is command line stuffs.
+## API
+```javascript
+const tea = require("@axel669/teascript")
+
+const [compiledJS, ast] = await tea(code)
+```
+
+## CLI Usage
 
 ### Run Script
 ```
@@ -34,11 +40,14 @@ tea file -d -src:<input dir> -dest:<dest dir>
 
 ## TODO
 - block regex support
-- add pipeline operator
 - undecided
     - await/yield in do
 
 ## Changelog
+
+### 0.22.1
++ fix publish error where a file was forgotton
++ update README with information about the api
 
 ### 0.22.0
 + added safeguard keyword

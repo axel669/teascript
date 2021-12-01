@@ -1,6 +1,6 @@
 {
   "name": "@axel669/teascript",
-  "version": "0.22.0",
+  "version": "0.22.1",
   "description": "",
   "main": "compile.js",
   "scripts": {
@@ -28,6 +28,7 @@
     "grammar/",
     "cli.js",
     "compile.js",
-    "parser.js"
+    "parser.js",
+    "safe.js"
   ]
 }
