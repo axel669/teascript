@@ -285,6 +285,26 @@ Safeguard
             value,
         })
     }
+    / "safeguard^" __s "await" __s expr:Expr {
+        return token.safeguard({
+            wait: true,
+            body: [],
+            expr,
+            value: token.return({
+                expr: token.var({name: "error"})
+            }),
+        })
+    }
+    / "safeguard^" __s expr:Expr {
+        return token.safeguard({
+            wait: false,
+            body: [],
+            expr,
+            value: token.return({
+                expr: token.var({name: "error"})
+            }),
+        })
+    }
 
 Try
     = "try" __s "{" _l body:Exprs _l handle:Catch _l last:(Finally _l)? "}" {
@@ -491,12 +511,6 @@ If
             body: [],
         })
     }
-    // / ("if" / "guard") __s condition:(Logical / Compare) _l "=>" __ expr:Expr {
-    //     return token.if({
-    //         condition,
-    //         expr,
-    //     })
-    // }
 
 For
     = "for" wait:(__s "await")? __s name:Word __s ":" __s range:Range __s "{" __ body:Exprs __ "}" {

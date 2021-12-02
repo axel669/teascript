@@ -31,6 +31,7 @@ fn spin {
 
 fn resetOn {
     show <- false
+    let test <- safeguard^ test()
 }
 
 $: resetOn(tumblers)
