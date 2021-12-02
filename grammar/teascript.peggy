@@ -484,12 +484,19 @@ If
             value,
         })
     }
-    / ("if" / "guard") __s condition:(Logical / Compare) _l "=>" __ expr:Expr {
+    / ("if" / "guard") __s condition:(Logical / Compare) _s "{" _l value:Return __ "}" {
         return token.if({
             condition,
-            expr,
+            value,
+            body: [],
         })
     }
+    // / ("if" / "guard") __s condition:(Logical / Compare) _l "=>" __ expr:Expr {
+    //     return token.if({
+    //         condition,
+    //         expr,
+    //     })
+    // }
 
 For
     = "for" wait:(__s "await")? __s name:Word __s ":" __s range:Range __s "{" __ body:Exprs __ "}" {

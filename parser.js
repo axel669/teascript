@@ -683,10 +683,11 @@ function peg$parse(input, options) {
               value,
           })
       };
-  var peg$f49 = function(condition, expr) {
+  var peg$f49 = function(condition, value) {
           return token.if({
               condition,
-              expr,
+              value,
+              body: [],
           })
       };
   var peg$f50 = function(wait, name, range, body) {
@@ -6382,22 +6383,35 @@ function peg$parse(input, options) {
             s3 = peg$parseCompare();
           }
           if (s3 !== peg$FAILED) {
-            s4 = peg$parse_l();
-            if (s4 !== peg$FAILED) {
-              if (input.substr(peg$currPos, 2) === peg$c57) {
-                s5 = peg$c57;
-                peg$currPos += 2;
-              } else {
-                s5 = peg$FAILED;
-                if (peg$silentFails === 0) { peg$fail(peg$e64); }
-              }
-              if (s5 !== peg$FAILED) {
-                s6 = peg$parse__();
-                if (s6 !== peg$FAILED) {
-                  s7 = peg$parseExpr();
-                  if (s7 !== peg$FAILED) {
-                    peg$savedPos = s0;
-                    s0 = peg$f49(s3, s7);
+            s4 = peg$parse_s();
+            if (input.charCodeAt(peg$currPos) === 123) {
+              s5 = peg$c2;
+              peg$currPos++;
+            } else {
+              s5 = peg$FAILED;
+              if (peg$silentFails === 0) { peg$fail(peg$e6); }
+            }
+            if (s5 !== peg$FAILED) {
+              s6 = peg$parse_l();
+              if (s6 !== peg$FAILED) {
+                s7 = peg$parseReturn();
+                if (s7 !== peg$FAILED) {
+                  s8 = peg$parse__();
+                  if (s8 !== peg$FAILED) {
+                    if (input.charCodeAt(peg$currPos) === 125) {
+                      s9 = peg$c3;
+                      peg$currPos++;
+                    } else {
+                      s9 = peg$FAILED;
+                      if (peg$silentFails === 0) { peg$fail(peg$e7); }
+                    }
+                    if (s9 !== peg$FAILED) {
+                      peg$savedPos = s0;
+                      s0 = peg$f49(s3, s7);
+                    } else {
+                      peg$currPos = s0;
+                      s0 = peg$FAILED;
+                    }
                   } else {
                     peg$currPos = s0;
                     s0 = peg$FAILED;

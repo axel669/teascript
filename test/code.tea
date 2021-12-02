@@ -3,3 +3,36 @@ let test = do {
         10 |> b |> a
     )
 }
+
+fn spin {
+    @node
+    @params
+
+    let duration = (Math.random() * 3000) + 2000
+    let target = Math.floor(
+        Math.random() * 10
+    )
+    let targetRotation = 36 * target
+    let turns = -(1620 + targetRotation)
+
+    => {
+        :duration duration
+        :css fn{t, u} => "transform: rotate3d(1, 0, 0, #{t * turns}deg);"
+        :tick fn {
+            @t
+
+            guard t != 1 {
+                => void
+            }
+            rotation = targetRotation
+        }
+    }
+}
+
+fn resetOn {
+    show <- false
+}
+
+$: resetOn(tumblers)
+$: wheel?.spin()
+test?.thing[0].wat()

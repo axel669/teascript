@@ -20,7 +20,11 @@ npm i @axel669/teascript
 ```javascript
 const tea = require("@axel669/teascript")
 
-const [compiledJS, ast] = await tea(code)
+const result = await tea(code)
+if (result instanceof Error) {
+    //  do something with the error
+}
+const [compiledJS, ast] = result
 ```
 
 ## CLI Usage
@@ -44,6 +48,10 @@ tea file -d -src:<input dir> -dest:<dest dir>
     - await/yield in do
 
 ## Changelog
+
+### 0.22.2
++ added rollup and svelte plugins
++ force brackets on all if statements
 
 ### 0.22.1
 + fix publish error where a file was forgotton

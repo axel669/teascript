@@ -1,6 +1,6 @@
 {
   "name": "@axel669/teascript",
-  "version": "0.22.1",
+  "version": "0.22.2",
   "description": "",
   "main": "compile.js",
   "scripts": {
@@ -26,6 +26,8 @@
   "files": [
     "funcs/",
     "grammar/",
+    "rollup/",
+    "svelte/",
     "cli.js",
     "compile.js",
     "parser.js",
