@@ -49,6 +49,15 @@ tea file -d -src:<input dir> -dest:<dest dir>
 
 ## Changelog
 
+### 0.22.4
++ fixed a bug in function args introduced by the change to export/variable decl
++ added debugger keyword
++ assignment using `=` removed, finally decided to not use that
++ assignment arrows are now spaceships `<+` / `+>`
+
+### 0.22.3
++ added `safeguard^`
+
 ### 0.22.2
 + added rollup and svelte plugins
 + force brackets on all if statements

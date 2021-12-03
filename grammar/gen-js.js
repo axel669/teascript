@@ -127,6 +127,7 @@ const generateCode = (source) => {
 
             return `${genJS(target)}${op}(${genJS(args).join(", ")})`
         },
+        "debugger": () => "debugger;",
         "delete": token => {
             const {expr} = token
 

@@ -13,6 +13,7 @@
         "binop",
         "call",
         "computedKey",
+        "debugger",
         "delete",
         "do",
         "dotAccess",
@@ -91,6 +92,7 @@ Exprs "expression group"
 Statement "statement"
     = If
     / For
+    / Debugger
     / VariableDecl
     / Throw
     / Try
@@ -143,6 +145,9 @@ PipeValue
     = FunctionDecl
     / Identifier
     / Parens
+
+Debugger
+    = "debugger" {return token.debugger()}
 
 Reactive
     = "$:" __s expr:Statement {
@@ -366,19 +371,26 @@ ExportItem
     }
 
 VariableCreation
-    = name:Var __s ("=" / "<-") __s value:Expr {
+    = name:Var __s "<+" __s value:Expr {
         return {name, value}
+    }
+VariableDestruct
+    = value:Expr __s "+>" __s name:(ObjDest / ArrayDest) {
+        return {
+            name,
+            value,
+        }
     }
 
 VariableDecl "variable declaration"
-    = mut:("let" / "mut") __s name:Var __s "<-" __s guard:Safeguard {
+    = mut:("let" / "mut") __s name:Var __s "<+" __s guard:Safeguard {
         return token.let({
             mutable: mut === "mut",
             name,
             guard,
         })
     }
-    / mut:("let" / "mut") __s name:(ObjDest / ArrayDest) __s "<-" __s guard:Safeguard {
+    / mut:("let" / "mut") __s name:(ObjDest / ArrayDest) __s "<+" __s guard:Safeguard {
         return token.let({
             mutable: mut === "mut",
             name,
@@ -392,14 +404,20 @@ VariableDecl "variable declaration"
             mutable: mut === "mut",
         })
     }
-    / mut:("let" / "mut") __s value:Expr __s "->" __s name:(ObjDest / ArrayDest) {
+    / mut:("let" / "mut") __s dest:VariableDestruct {
         return token.let({
             mutable: mut === "mut",
-            name,
-            value,
+            ...dest
         })
     }
-    / mut:("let" / "mut") __s name:(ObjDest / ArrayDest) __s "<-" __s value:Expr {
+    // / mut:("let" / "mut") __s value:Expr __s "+>" __s name:(ObjDest / ArrayDest) {
+    //     return token.let({
+    //         mutable: mut === "mut",
+    //         name,
+    //         value,
+    //     })
+    // }
+    / mut:("let" / "mut") __s name:(ObjDest / ArrayDest) __s "<+" __s value:Expr {
         return token.let({
             mutable: mut === "mut",
             name,
@@ -428,11 +446,11 @@ ObjDest
         })
     }
 ObjDestructEntry
-    = left:As __s op:("=" / "<-") __s right:Expr {
-        return token.assign({left, right, op})
+    = left:As __s "<+" __s right:Expr {
+        return token.assign({left, right, op: "="})
     }
-    / left:Var __s op:("=" / "<-") __s right:Expr {
-        return token.assign({left, right, op})
+    / left:Var __s "<+" __s right:Expr {
+        return token.assign({left, right, op: "="})
     }
     / As
     / Var
@@ -446,8 +464,8 @@ ArrayDest
         })
     }
 ArrayDestructEntry
-    = left:Var __s op:"=" __s right:Expr {
-        return token.assign({left, right, op})
+    = left:Var __s "<+" __s right:Expr {
+        return token.assign({left, right, op: "="})
     }
     / Var
 
@@ -473,7 +491,7 @@ FunctionDecl "function declaration"
     }
 
 ArgList
-    = args:(_l "@" (VariableCreation / Var))+ {
+    = args:(_l "@" (VariableCreation / VariableDestruct / Var))+ {
         return token.arg({
             args: args.map(arg => arg[2])
         })
@@ -489,10 +507,10 @@ Do
     }
 
 Return
-    = ("return" / "=>") __s expr:Expr {
+    = "=>" __s expr:Expr {
         return token.return({expr})
     }
-    / ("return" / "=>") {
+    / "=>" {
         error("Return must have a expression")
     }
 
@@ -604,15 +622,15 @@ AssignmentOp
     // / "<<=" / ">>="
     // / "<<<=" / ">>>="
 Assignment
-    = left:LValue __s op:AssignmentOp __s right:Expr {
-        return token.assign({left, right, op})
+    = left:LValue __s "<+" __s right:Expr {
+        return token.assign({left, right, op: "="})
     }
-    / left:(ArrayDest / ObjDest) __s op:("=" / "<-") __s right:Expr {
+    / left:(ArrayDest / ObjDest) __s "<+" __s right:Expr {
         return token.assign({
             dest:true,
             left,
             right,
-            op,
+            op: "=",
         })
     }
 LValue "lvalue"
