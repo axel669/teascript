@@ -234,7 +234,13 @@ MathUnary
     }
 
 Ternary
-    = "?" "(" _ condition:Expr _ ")" __ t:TrueCase {
+    = "?" "(" _ condition:Expr _ ")" __ t:TrueCase __ f:FalseCase {
+        return token.ternary({condition, t, f})
+    }
+    / "?" "(" _ condition:Expr _ ")" __ f:FalseCase __ t:TrueCase {
+        return token.ternary({condition, t, f})
+    }
+    / "?" "(" _ condition:Expr _ ")" __ t:TrueCase {
         return token.ternary({
             condition,
             t,
@@ -247,12 +253,6 @@ Ternary
             f,
             t: token.null(),
         })
-    }
-    / "?" "(" _ condition:Expr _ ")" __ t:TrueCase __ f:FalseCase {
-        return token.ternary({condition, t, f})
-    }
-    / "?" "(" _ condition:Expr _ ")" __ f:FalseCase __ t:TrueCase {
-        return token.ternary({condition, t, f})
     }
 TrueCase
     = "=" __s value:Expr {return value}

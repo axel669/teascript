@@ -49,6 +49,9 @@ tea file -d -src:<input dir> -dest:<dest dir>
 
 ## Changelog
 
+### 0.22.5
++ fixed bug where ternary wouldn't parse the long form
+
 ### 0.22.4
 + fixed a bug in function args introduced by the change to export/variable decl
 + added debugger keyword
