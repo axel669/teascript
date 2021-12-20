@@ -1,0 +1,27 @@
+###
+Safeguard is intended as an alternative to try/catch/throw, stolen from rust.
+Right now safeguard can only be used with variable declarations, but that may
+expand later.
+
+Sageguard statements wrap the call, and if the expression evaluates without
+error, the value is assigned as normal and the code continues on. If an error
+is thrown then the attached block is executed with the error available in the
+"error" variable, and the function returns at the end of the block.
+
+If the safeguard^ is used, the function will return the error instead of having
+an attached code block.
+
+Await can be used with safeguard.
+###
+
+let result <+ safeguard mightThrow() {
+    console.error(error)
+    => error
+}
+let next <+ safeguard^ alsoMightThrow()
+
+let data <+ safeguard await readFile("thing.txt") {
+    console.log("file read problem!")
+    => error
+}
+let response <+ safeguard^ await fetch(url)
