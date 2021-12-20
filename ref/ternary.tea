@@ -1,0 +1,17 @@
+###
+The ternary opearator works like the ?: op in JS, but with changed syntax.
+The true case of the ternary starts with "=", and the false case starts with
+":". Either case can be omitted (but not both), and if it is, the case will
+return null. The true and false cases can also be in any order.
+###
+
+let value <+ ?(condition)
+    = true
+    : false
+let value <+ ?(condition)
+    : false
+    = true
+# false case is null
+let thing <+ ?(func()) = 100
+# true case is null
+let other <+ ?(wat()) : "nope"

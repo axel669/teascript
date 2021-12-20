@@ -1,0 +1,23 @@
+###
+For loops are the only loop in TeaScript.
+Parens are not needed around the loop condiitions.
+For loops can iterate over collections or ranges, or run infinitely.
+Loop variables are always constant.
+###
+
+# Collection
+for item : collection {
+}
+
+for item : list {
+    # Not Allowed
+    item = someValue
+}
+
+# Range
+for x : 0 -> 100 {
+}
+
+# Infinite
+for ever {
+}

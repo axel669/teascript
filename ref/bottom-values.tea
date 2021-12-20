@@ -1,0 +1,11 @@
+###
+TeaScript uses "null" and "void" as bottom values.
+null is the same as the JS null, void is the JS undefined.
+###
+
+let nullThing = null
+let thing = [1, 2, 3]
+
+console.log(
+    thing.find(fn => false) == void
+)

@@ -1,0 +1,65 @@
+###
+Teascript functions start with "fn" (including short functions).
+Because teascript does not use classes, there is no equivalent to arrow
+functions to capture "this". A closure can be used to emulate this behavior
+if necessary.
+
+Long form functions have arguments defined in the function body with optional
+defaults, destructuring, and defaults do not have to be at the end of the list.
+Names are optional on functions.
+When arguments are destructured into arrays or objects, a default of the empty
+value will be assigned to them before destructuring ([] or {}).
+
+Short form functions cannot have default arguments, but this is less of an
+issue because of the ?? operator.
+
+Function calls work as normal, with an additional syntax to shorthand sending
+objects with keys as the last argument (like an options object). Arguments for\
+function calls need to be separated by a "," if they are on the same line,
+or separated by new lines.
+###
+
+fn lucas {
+    @nth
+
+    guard nth == 0 {
+        => 2
+    }
+    guard nth == 1 {
+        => 1
+    }
+
+    => lucas(nth - 2) + lucas(nth - 1)
+}
+
+fn head {
+    @sourceArray +> [head, ...tail]
+
+    console.log(tail)
+    => head
+}
+
+async fn postFetch {
+    @url
+    @options <+ {}
+
+    let response <+ fetch(
+        url
+        {
+            ...options,
+            :method "POST"
+        }
+    )
+}
+
+array.map(
+    fn{item} => item ** 2
+)
+
+# The arguments that look like object entries will collected into a single
+# object and passed as one argument at the end.
+fetch(
+    url
+    :method "POST"
+    :body data
+)

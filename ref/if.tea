@@ -1,0 +1,15 @@
+###
+If statements do not require parens around the condition.
+TeaScript treats all ifs as guard clauses which means every if must return as
+the last statement in the block, and there is no else.
+The guard keyword can be used interchangibly with if.
+###
+
+if value == other {
+    # stuff
+    => "return value"
+}
+guard anotherThing != false {
+    # stuff
+    => "return value"
+}

@@ -1,0 +1,31 @@
+###
+TeaScript arrays use the same syntax as JS arrays, but items can be separated
+by new lines instead of commas.
+
+Arrays can be created from ranges or through comprehensions.
+Array Comprehensions allow for arrays to be created from calculated values
+over a range.
+
+Array access can be done in the same way as JS (with a change to optional
+chaining, see the optional-chaining.tea file), or with slices. Array slices
+use the array access syntax, but with a range as the key instead of an
+expression or number.
+###
+
+let arr1 <+ [1, 2, 3, 4]
+let arr2 <+ ["strings", ["more", "arrays"]]
+
+let arr3 <+ [
+    "no commas"
+    "for multiple lines"
+    100
+    3.14e2
+]
+
+let range <+ [0 -> 100]
+let range2 <+ [0 -> -100]
+let comprehension <+ [x ** 2 from x : 0 -> 100]
+let comprehension2 <+ [calc(n) from n : -10 -> 10]
+
+arr1[0 -> 100]
+notArray[0 -> 10]

@@ -1,0 +1,50 @@
+###
+TeaScript has very simple operator precedence:
+mathematical > comparison > logical
+
+All binary operators must have spaces surrounding them; this is enforced by
+the parser.
+
+Precedence within the types of binary ops is handled by putting things in
+parens. Teascript enforces this style by disallowing operator mixing in the
+same precedence level with out parens.
+
+Equality operators are ==/!= but compile down to ===/!==. There is no way to
+use the coersing equality operators in TeaScript.
+
+Unary operators all have parens around the expression they operator on.
+###
+
+# Mathematical
+let a <+ 1
+let b <+ a + 1
+let c <+ (b ** 2) + 1
+
+# not allowed, ** and + are both math ops
+let c <+ b ** 2 + 1
+
+# Comparison
+if a < b {
+}
+if b > c {
+}
+
+# Logical
+if true || false {
+}
+if true && true {
+}
+if a < b && c != 100 {
+}
+if (a < b && b < c) || c == 10 {
+}
+
+# not allowed
+if a < b && b < c || c > 10 {
+}
+
+# Unary
+!(thing)
+-(value)
+!(a < b)
+-(a + b)

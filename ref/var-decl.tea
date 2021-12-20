@@ -1,0 +1,26 @@
+###
+Variables declared with let cannot be reassigned (rust inspired).
+Variables declared with mut can be reassigned (more rust inspiration)
+Thin arrows denote the direction that data is moving, so they are always
+pointing from the source value to the destination variables.
+
+Array and Object destructuring can be done in either direction since the arrow
+direction denotes movement of data (so no need for R- and L-values)
+###
+
+let constant <+ 100
+mut mutable <+ "string"
+
+let obj <+ {
+    a 10
+    b 12
+}
+# These result in the same thing
+let obj +> {a, b}
+let {a, b} <+ obj
+
+let obj +> {
+    # default values
+    c <+ -1
+}
+let array +> [first, second, ...rest]

@@ -1,0 +1,17 @@
+###
+TeaScript do expressions are for grouping code that should exist in its own
+block, but isnt a function (or an iife). The value of the do expression is
+the first returned value in the block (like a function). The TeaScript do
+expression is more powerful than the proposed JS keyword beacuse it allows
+any code that would go inside a function.
+###
+
+let value = do {
+    let list = values()
+    for item : list {
+        guard item < 0 {
+            => null
+        }
+    }
+    => list
+}

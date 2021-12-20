@@ -1,0 +1,15 @@
+###
+TeaScript allows array and object destructing with the same rules as JS.
+Because TeaScript does not allow free standing code blocks (it has do instead),
+array destructuring does not need extra characters around it for safety.
+
+Currently the arrow can only go one direction (inlike with variable
+declarations), but that's only beacuse I didn't think about it going the other
+way before publishing the current version. Future versions might the arrow go
+either direction.
+
+For destructuring in variable declarations, see the var-decl.tea file.
+###
+
+[head, ...tail] <+ list
+{a, b, ...rest} <+ obj

@@ -1,0 +1,14 @@
+###
+TeaScript strings always use double quotes, and can have interpolation in the
+same way template strings can in JS. Interpolation is done inside of #{} instead
+of ${}, but otherwise uses the same rules. Tagged template strings use the
+TeaScript string syntax, but follow the same rules as tagged template literals
+from JS.
+###
+
+let regular = "regular string"
+let interpolated = "the value of x is #{x}"
+let multiline = "multiline strings
+arent an issue"
+
+let tagged = tag`"some string #{value} passed in"

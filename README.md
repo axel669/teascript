@@ -43,9 +43,7 @@ tea file -d -src:<input dir> -dest:<dest dir>
 ```
 
 ## TODO
-- block regex support
-- undecided
-    - await/yield in do
+See the language ref (in the [ref](/ref) folder) for the future plans.
 
 ## Changelog
 

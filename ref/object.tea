@@ -1,0 +1,22 @@
+###
+TeaScript objects use the same rules as JS objects with a slightly different
+syntax. Keys are prefixed by ":", and computed property names are inside :().
+Key-value pairs are separated by a space instead of a colon, and entries are
+separated by a comma if they are on the same line, or separated by new lines.
+Spread operator within objects is unchanged in syntax and rules.
+###
+
+let obj <+ {
+    :a 10
+    :b 12
+    :(computed) "some value"
+}
+let copy <+ {...obj}
+let merge <+ {
+    ...obj
+    :other "keys"
+    :more values
+    :nested {
+        :objects "work"
+    }
+}
