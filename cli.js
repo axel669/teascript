@@ -10,7 +10,7 @@ const {$safe} = require("./safe.js")
 
 const loadCode = async (info) => {
     const sourceCode = await fs.readFile(info.args[0], "utf8")
-    return await compile(sourceCode, info)
+    return await compile(sourceCode, info.options)
 }
 const commands = {
     file: async (info) => {

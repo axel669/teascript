@@ -15,8 +15,8 @@ const prettyOptions = {
     jslint_happy: true,
 }
 
-const topLevelTransform = async (sources, info) => {
-    const {es6, browser} = info.options
+const topLevelTransform = async (sources, options) => {
+    const {es6, browser} = options
     const src = [...sources]
 
     if (es6 === true) {
@@ -97,7 +97,7 @@ const errorWith = (err, info) => {
     return err
 }
 
-const compile = async (sourceCode, info) => {
+const compile = async (sourceCode, options = {}) => {
     let last = null
     const tracer = {
         trace: evt => {
@@ -121,7 +121,7 @@ const compile = async (sourceCode, info) => {
     }
     const [js, topLevel] = compiledCode
 
-    const topLevelFuncs = await topLevelTransform(topLevel, info)
+    const topLevelFuncs = await topLevelTransform(topLevel, options)
     const output = [...topLevelFuncs, ...js].join("\n")
 
     return [jsb(output, prettyOptions), ast]
