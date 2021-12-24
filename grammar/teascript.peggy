@@ -62,6 +62,10 @@
         (list, item) => [...list, item[n]],
         [head]
     )
+    const listMap = (head, tail, map) => tail.reduce(
+        (list, item) => [...list, map(item)],
+        [head]
+    )
     const token = tokenTypes.reduce(
         (toks, type) => {
             toks[type] = tok(type)
@@ -209,9 +213,16 @@ Logical
     }
 
 Pipeline
-    = head:ComparableValue tail:(__ "|>" __s PipeValue)+ {
+    = head:ComparableValue tail:(__ "|>" __s "(" Word ":" __s Expr _ ")")+ {
         return token.pipe({
-            list: list(head, tail, 3)
+            list: listMap(
+                head,
+                tail,
+                item => ({
+                    binding: item[4],
+                    expr: item[7]
+                })
+            )
         })
     }
 
@@ -228,6 +239,9 @@ Unary
 MathUnary
     = op:"-" "(" _ expr:Expr _ ")" {
         return token.unary({op, expr, func: true})
+    }
+    / op:"await" mode:$("." ("allSettled" / "all" / "race" / "any")) __s expr:Expr {
+        return token.unary({op, expr, mode})
     }
     / op:("await" / "yield") __s expr:Expr {
         return token.unary({op, expr})
@@ -613,14 +627,6 @@ Shorthand
         return token.shorthand({name})
     }
 
-AssignmentOp
-    = "="
-    / "<-"
-    // / "+=" / "-="
-    // / "*=" / "/=" / "%="
-    // / "**="
-    // / "<<=" / ">>="
-    // / "<<<=" / ">>>="
 Assignment
     = left:LValue __s "<+" __s right:Expr {
         return token.assign({left, right, op: "="})
@@ -854,10 +860,8 @@ Var
     }
 
 Comment
-    = $("###" (!"###" .*) "###")
-    / $("#" (!"\n" .)*)
-    // = $("/*" (!"*/" .)* "*/")
-    // / $("//" (!"\n" .)*)
+    = $("###" (!"###" (. / "\n" / "\r"))* "###") {return null}
+    / $("#" (!"\n" .)*) {return null}
 
 Word
     = $([a-zA-Z\$] [a-zA-Z0-9_\$]*)
@@ -876,8 +880,8 @@ __ "whitespace"
 _ "whitespace"
     = ([ \t\n\r]+ / Comment)* {return null}
 _s "space"
-    = [ \t]* Comment? {return null}
+    = ([ \t]+ / Comment)* {return null}
 __s "required space"
-    = [ \t]+ Comment? {return null}
+    = ([ \t]+ / Comment)+ {return null}
 _l "newline"
     = (_s ([\n\r]+ / Comment)+ _s)+ {return null}

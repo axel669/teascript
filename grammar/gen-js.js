@@ -24,6 +24,7 @@ const generateCode = (source) => {
         return `_ref${refID}`
     }
     let scope = [[]]
+    let rebind = null
 
     const argLine = (token, index) => {
         const { type, name, value } = token
@@ -302,18 +303,50 @@ const generateCode = (source) => {
             const {list} = token
             const ref = makeRef()
 
+            // return "/* pipe sequence */"
+
             scope[0].push(ref)
-            const sequence = genJS(
-                list.map(
-                    expr => ({
-                        type: "assign",
-                        op: "<-",
-                        left: {type: "var", name: ref},
-                        right: expr
-                    })
+            const refTok = { type: "var", name: ref }
+            const sequence = [
+                genJS({
+                    type: "assign",
+                    left: refTok,
+                    right: list[0],
+                }),
+                ...list.slice(1).map(
+                    pipeExpr => {
+                        const {binding, expr} = pipeExpr
+                        rebind = {
+                            from: binding,
+                            to: ref
+                        }
+                        const js = genJS({
+                            type: "assign",
+                            op: "<-",
+                            left: refTok,
+                            right: expr,
+                        })
+                        rebind = null
+                        return js
+                    }
                 )
-            ).join(", ")
-            return `(${sequence})`
+            ]
+            // const sequence = genJS([
+            //     {
+            //         type: "assign",
+            //         left: refTok,
+            //         right: list[0],
+            //     },
+            //     ...list.slice(1).map(
+            //         expr => ({
+            //             type: "assign",
+            //             op: "<-",
+            //             left: refTok,
+            //             right: expr,
+            //         })
+            //     )
+            // ]).join(", ")
+            return `(${sequence.join(", ")})`
         },
         "reactive": token => `$: ${genJS(token.expr)}`,
         "regex": token => {
@@ -401,14 +434,20 @@ const generateCode = (source) => {
         },
         "typeof": token => `typeof(${genJS(token.expr)})`,
         "unary": token => {
-            const {op, expr, func} = token
+            const {op, expr, func, mode} = token
 
             if (func === true) {
             }
+            const wrapper = (mode !== undefined) ? `Promise${mode}` : ""
 
-            return `${op} ${genJS(expr)}`
+            return `${op} ${wrapper}(${genJS(expr)})`
         },
-        "var": token => token.name,
+        "var": token => {
+            if (token.name === rebind?.from) {
+                return rebind.to
+            }
+            return token.name
+        },
         "void": () => "undefined",
     }
 

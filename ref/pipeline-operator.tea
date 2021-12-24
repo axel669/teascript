@@ -1,0 +1,10 @@
+###
+Pipeline opeartor is based on the Hack version of the pipe operator, but with
+a small change that makes it look more like the F# pipes.
+###
+
+let piped <+ (
+    10
+    |> (n: n + 1)
+    |> (n: n * 2)
+)
