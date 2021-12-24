@@ -1,24 +1,24 @@
-function isPal(..._args) {
-    const num = _args[0];
-    const f = num.toString();
-    const b = f.split("").reverse().join("");
-    return f === b;
-}
-function* pal(..._args) {
-    for (
-        let _pos = 999, _end = 900, _start = _pos, _inc = 1;
-        _end < _start ? _pos > _end : _pos < _end;
-        _end < _start ? (_pos -= _inc) : (_pos += _inc)
-    ) {
-        const a = _pos;
-        for (
-            let _pos = 999, _end = 900, _start = _pos, _inc = 1;
-            _end < _start ? _pos > _end : _pos < _end;
-            _end < _start ? (_pos -= _inc) : (_pos += _inc)
-        ) {
-            const b = _pos;
-            yield a * b;
+const _range = (start, end, inc, map = (i) => i) => {
+    if (start > end) {
+        const array_r = [];
+        for (let item = start; item > end; item -= inc) {
+            array_r.push(map(item));
         }
+        return array_r;
     }
-}
-console.log(Math.max(...[...pal()].filter(isPal)));
+
+    const array = [];
+    for (let item = start; item < end; item += inc) {
+        array.push(map(item));
+    }
+    return array;
+};
+console.log(
+    _range(0, 1000, 1)
+        .filter(function (n) {
+            return n % 3 === 0 || n % 5 === 0;
+        })
+        .reduce(function (total, n) {
+            return total + n;
+        }, 0)
+);

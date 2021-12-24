@@ -1,44 +1,9 @@
-fn isPal {
-    @num
-
-    let f = num.toString()
-    let b = f.split("").reverse().join("")
-
-    => f == b
-}
-
-fn* pal {
-    for a : 999 -> 900 {
-        for b : 999 -> 900 {
-            yield a * b
-        }
-    }
-}
-
-try {
-    wat()
-    @catch error {
-        test()
-    }
-    @finally {
-        woah()
-    }
-}
-
-console.log(
-    Math.max(
-        ...([...pal()]
-            .filter(isPal)
-        )
-    )
-)
-
-let actions = {
+let actions <+ {
     :$set fn{current, value} => value
     :$unset fn {
         @source
         @names
-        let dest <- {...source}
+        let dest <+ {...source}
         for name : names {
             delete{dest[name]}
         }
@@ -53,36 +18,43 @@ let actions = {
 
 fn copyObject {
     @source
-    @createIfVoid = false
+    @createIfVoid <+ false
 
-    if Array.isArray(source) == true
+    guard Array.isArray(source) == true {
         => [...source]
-    if source == void && createIfVoid == true
+    }
+    guard source == void && createIfVoid == true {
         => {}
-    if typeof{source} != "object" || source == null
+    }
+    guard typeof{source} != "object" || source == null {
         => source
-    if instance<Map>{source} == true
+    }
+    guard instance<Map>{source} == true {
         => &Map(source)
-    if instance<Set>{source} == true
+    }
+    guard instance<Set>{source} == true {
         => &Set(source)
-    if source.constructor != Object
+    }
+    guard source.constructor != Object {
         => source
+    }
     => {...source}
 }
 
 fn setValues {
-    @info -> {
+    @info +> {
         dest
         key
         pos
         value
         create
     }
-    let name <- key[pos]
-    if pos == (key.length - 1)
+    let name <+ key[pos]
+    guard pos == (key.length - 1) {
         => actions[name](dest, value)
-    let next <- copyObject(dest, create)
-    next[name] <- setValues(
+    }
+    let next <+ copyObject(dest, create)
+    next[name] <+ setValues(
         :dest
         :key
         :pos pos + 1
@@ -103,7 +75,7 @@ fn splitKey {
 fn update {
     @source
     @updates
-    @createIfVoid = false
+    @createIfVoid <+ false
 
     => Object.keys(updates)
         .reduce(
@@ -118,6 +90,6 @@ fn update {
         )
 }
 
-update.actions <- actions
+update.actions <+ actions
 
 export default update
