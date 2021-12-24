@@ -1,12 +1,12 @@
 {
   "name": "@axel669/teascript",
-  "version": "0.22.5",
+  "version": "0.22.6",
   "description": "",
   "main": "compile.js",
   "scripts": {
     "compile:grammar": "peggy --trace -o parser.js grammar/teascript.peggy",
-    "test:module": "node cli.js -src:test/code.tea -debug",
-    "run:module": "node test/output/tea.mjs"
+    "test:module": "node cli.js test/input/code.tea -debug",
+    "run:module": "node cli.js test/input/code.tea"
   },
   "bin": {
     "tea": "cli.js"
@@ -14,14 +14,13 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@babel/parser": "^7.16.3",
     "fs-extra": "^10.0.0",
     "glob": "^7.2.0",
-    "peggy": "^1.2.0",
-    "prettier": "^2.4.1"
+    "js-beautify": "^1.14.0"
   },
   "devDependencies": {
-    "node-fetch": "2"
+    "node-fetch": "2",
+    "peggy": "^1.2.0"
   },
   "files": [
     "funcs/",

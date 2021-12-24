@@ -1,6 +1,6 @@
 const fs = require("fs-extra")
 const path = require("path")
-const prettier = require("prettier")
+const jsb = require("js-beautify")
 
 const teascript = require("./parser.js")
 const generateCode = require("./grammar/gen-js.js")
@@ -8,13 +8,15 @@ const generateCode = require("./grammar/gen-js.js")
 const {_safe, $safe} = require("./safe.js")
 
 const prettyOptions = {
-    tabWidth: 4,
-    arrowParens: "always",
-    parser: "babel",
+    indent_size: 4,
+    operator_position: "after-newline",
+    wrap_line_length: 80,
+    break_chained_methods: true,
+    jslint_happy: true,
 }
 
-const topLevelTransform = async (sources, args) => {
-    const {es6, browser} = args
+const topLevelTransform = async (sources, info) => {
+    const {es6, browser} = info.options
     const src = [...sources]
 
     if (es6 === true) {
@@ -95,7 +97,7 @@ const errorWith = (err, info) => {
     return err
 }
 
-const compile = async (sourceCode, args = {}) => {
+const compile = async (sourceCode, info) => {
     let last = null
     const tracer = {
         trace: evt => {
@@ -119,10 +121,10 @@ const compile = async (sourceCode, args = {}) => {
     }
     const [js, topLevel] = compiledCode
 
-    const topLevelFuncs = await topLevelTransform(topLevel, args)
+    const topLevelFuncs = await topLevelTransform(topLevel, info)
     const output = [...topLevelFuncs, ...js].join("\n")
 
-    return [prettier.format(output, prettyOptions), ast]
+    return [jsb(output, prettyOptions), ast]
 }
 
 module.exports = compile

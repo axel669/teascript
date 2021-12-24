@@ -8,22 +8,25 @@ const glob = require("glob")
 const compile = require("./compile.js")
 const {$safe} = require("./safe.js")
 
-const loadCode = async (args) => {
-    const sourceCode = await fs.readFile(args.source, "utf8")
-    return await compile(sourceCode, args)
+const loadCode = async (info) => {
+    const sourceCode = await fs.readFile(info.args[0], "utf8")
+    return await compile(sourceCode, info)
 }
 const commands = {
-    file: async (args) => {
-        const compileResult = await $safe(loadCode, [args])
+    file: async (info) => {
+        const compileResult = await $safe(loadCode, [info])
         if (compileResult instanceof Error) {
             console.error(compileResult)
             return
         }
         const [outputCode] = compileResult
-        await fs.outputFile(args.dest, outputCode)
+        const destFile = (info.options.compile === true)
+            ? info.args[0].replace(/\.tea$/, `.${info.options.ext ?? "js"}`)
+            : info.args[1]
+        await fs.outputFile(destFile, outputCode)
     },
-    run: async (args) => {
-        const compileResult = await $safe(loadCode, [args])
+    run: async (info) => {
+        const compileResult = await $safe(loadCode, [info])
         if (compileResult instanceof Error) {
             console.error(compileResult)
             return
@@ -32,22 +35,23 @@ const commands = {
         const f = new Function(outputCode)
         f()
     },
-    dir: async (args) => {
-        const root = path.resolve(args.source)
-        const destRoot = path.resolve(args.dest)
+    dir: async (info) => {
+        const {args, options} = info
+        const root = path.resolve(args[0])
+        const destRoot = path.resolve(args[1])
         const sources = glob.sync("**/*.tea", {cwd: root})
-        const ext = args.ext ?? ".js"
+        const ext = options.ext ?? "js"
 
         for (const source of sources) {
             const file = path.resolve(root, source)
             const dest = path.resolve(
                 destRoot,
-                source.replace(/\.tea$/, ext)
+                source.replace(/\.tea$/, `.${ext}`)
             )
             console.log(file)
             const compileArgs = {
-                ...args,
-                source: file
+                ...info,
+                args: [file]
             }
             const compileResult = await $safe(loadCode, [compileArgs])
             if (compileResult instanceof Error) {
@@ -59,10 +63,10 @@ const commands = {
             await fs.outputFile(dest, code)
         }
     },
-    debug: async (args) => {
+    debug: async (info) => {
         require('util').inspect.defaultOptions.depth = null
 
-        const compileResult = await $safe(loadCode, [args])
+        const compileResult = await $safe(loadCode, [info])
         if (compileResult instanceof Error) {
             console.error(compileResult)
             return
@@ -74,17 +78,34 @@ const commands = {
     }
 }
 
+const parseArg = (current, arg, alias) => {
+    if (arg.startsWith("-") === true) {
+        const info = arg.match(/^\-(?<name>(\w|\d)+)((:|=)(?<value>.+))?$/)
+        const {name, value = true} = info.groups
+        const key = alias[name] ?? name
+        return {
+            ...current,
+            options: {
+                ...current.options,
+                [key]: value
+            }
+        }
+    }
+    return {
+        ...current,
+        args:  [...current.args, arg],
+    }
+}
 const parseArgs = (args, alias = {}) => {
-    const parsed = {}
-
-    parsed._target = args[0]
-    parsed._file = args[1]
+    let parsed = {
+        _target: args[0],
+        _file: args[1],
+        args: [],
+        options: {}
+    }
 
     for (const arg of args.slice(2)) {
-        const info = arg.match(/^\-(?<name>(\w|\d)+)((:|=)(?<value>.+))?$/)
-        const {name, value} = info.groups
-        const key = alias[name] ?? name
-        parsed[key] = value ?? true
+        parsed = parseArg(parsed, arg, alias)
     }
 
     return parsed
@@ -96,17 +117,18 @@ const pargs = parseArgs(
         "src": "source",
         "b": "browser",
         "d": "dir",
+        "c": "compile",
     }
 )
 
 const cmd = (function() {
-    if (pargs.debug === true) {
+    if (pargs.options.debug === true) {
         return "debug"
     }
-    if (pargs.dest === undefined) {
+    if (pargs.args.length === 1 && pargs.options.compile !== true) {
         return "run"
     }
-    if (pargs.dir === true) {
+    if (pargs.options.dir === true) {
         return "dir"
     }
     return "file"

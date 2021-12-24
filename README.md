@@ -31,21 +31,28 @@ const [compiledJS, ast] = result
 
 ### Run Script
 ```
-tea file -src:<input file>
+tea file <input file>
 ```
 ### Transpile File
 ```
-tea file -src:<input file> -dest:<dest file>
+tea file <input file> <dest file>
+tea file -c <input file>
 ```
 ### Transpile Directory
 ```
-tea file -d -src:<input dir> -dest:<dest dir>
+tea file -d <input dir> <dest dir>
 ```
 
 ## TODO
 See the language ref (in the [ref](/ref) folder) for the future plans.
 
 ## Changelog
+
+### 0.22.6
++ fixed bug in multiline comments not parsing
++ pipeline operator fully implemented
++ added await ops (.all, .allSettled, .any, .race)
++ cli changes to make it easier (stole another idea from coffeescript)
 
 ### 0.22.5
 + fixed bug where ternary wouldn't parse the long form
