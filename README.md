@@ -20,11 +20,16 @@ npm i @axel669/teascript
 ```javascript
 const tea = require("@axel669/teascript")
 
-const result = await tea(code)
+const result = await tea(
+    sourceCode,
+    options = {
+        target?: "es6" | "browser"
+    }
+)
 if (result instanceof Error) {
     //  do something with the error
 }
-const [compiledJS, ast] = result
+const { code, ast } = result
 ```
 
 ## CLI Usage
@@ -53,23 +58,27 @@ Compile directory with output file structure mirroring source directory
 
 -target=es6|node
 Code output target. es6 will use import statements for the built-in functions,
+browser will inline the built-in functions, any other value (or omitting) will
+insert require calls.
 ```
 
 ## Browser Usage
-Include the script `build/browser-tea.js` on the page.
-```javascript
-const {code, ast} = teascript(
-    sourceCode,
-    options = {
-        target?: "es6" | "browser"
-    }
-)
+Include the script `build/browser-tea.js` on the page or use the CDN link.
+The browser script adds the `teascript` function to the global scope.
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/axel669/teascript@0.22.7/dist/browser-tea.js"></script>
 ```
 
 ## TODO
 See the language ref (in the [ref](/ref) folder) for the future plans.
 
 ## Changelog
+
+### 0.22.7
++ update exposed API
++ made cli options fit more standard styles
++ add browser support
 
 ### 0.22.6
 + fixed bug in multiline comments not parsing
