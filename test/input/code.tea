@@ -1,21 +1,21 @@
-# console.log(
-#     [0 -> 1000]
-#         .filter(
-#             fn{n} => (n % 3) == 0 || (n % 5) == 0
-#         )
-#         .reduce(
-#             fn{total, n} => total + n
-#             0
-#         )
-# )
+console.log(
+    [0 -> 1000]
+        .filter(
+            fn{n} => (n % 3) == 0 || (n % 5) == 0
+        )
+        .reduce(
+            fn{total, n} => total + n
+            0
+        )
+)
 
-# async fn test {
-#     @items
+async fn test {
+    @items
 
-#     => await.all items.map(
-#         fn{item} => item.asyncThing()
-#     )
-# }
+    => await.all items.map(
+        fn{item} => item.asyncThing()
+    )
+}
 
 console.log(
     10

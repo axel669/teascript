@@ -6,7 +6,8 @@
   "scripts": {
     "compile:grammar": "peggy --trace -o parser.js grammar/teascript.peggy",
     "test:module": "node cli.js test/input/code.tea -debug",
-    "run:module": "node cli.js test/input/code.tea"
+    "run:module": "node cli.js test/input/code.tea",
+    "compile:browser": "rollup -c browser/rollup.config.js"
   },
   "bin": {
     "tea": "cli.js"
@@ -19,8 +20,12 @@
     "js-beautify": "^1.14.0"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "@rollup/plugin-node-resolve": "^13.1.1",
     "node-fetch": "2",
-    "peggy": "^1.2.0"
+    "peggy": "^1.2.0",
+    "rollup": "^2.62.0",
+    "rollup-plugin-entry-code-injector": "^1.0.0"
   },
   "files": [
     "funcs/",

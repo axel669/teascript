@@ -1,5 +1,5 @@
-import _at from "@axel669/teascript/funcs/_at.js"
-import _set from "@axel669/teascript/funcs/_set.js"
+const _at = require("@axel669/teascript/funcs/_at.js")
+const _set = require("@axel669/teascript/funcs/_set.js")
 const actions = {
     $set: function (current, value) {
         return value

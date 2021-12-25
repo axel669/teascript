@@ -1,7 +1,7 @@
-const fs = require("fs-extra")
-const path = require("path")
-const jsb = require("js-beautify")
+// const fs = require("fs-extra")
+// const path = require("path")
 
+const jsb = require("js-beautify")
 const teascript = require("./parser.js")
 const generateCode = require("./grammar/gen-js.js")
 
@@ -13,37 +13,6 @@ const prettyOptions = {
     wrap_line_length: 80,
     break_chained_methods: true,
     jslint_happy: true,
-}
-
-const topLevelTransform = async (sources, options) => {
-    const {es6, browser} = options
-    const src = [...sources]
-
-    if (es6 === true) {
-        return src.map(
-            src => `import ${src} from "@axel669/teascript/funcs/${src}.js"`
-        )
-    }
-
-    if (browser !== true) {
-        return src.map(
-            src => `const ${src} = require("@axel669/teascript/funcs/${src}.js")`
-        )
-    }
-
-    return await Promise.all(
-        src.map(
-            (name) => fs.readFile(
-                path.resolve(
-                    __dirname,
-                    `funcs/${name}.js`
-                ),
-                "utf8"
-            ).then(
-                content => content.replace(/^module.+/m, "").trim()
-            )
-        )
-    )
 }
 
 const pmax = (a, b) => {
@@ -97,7 +66,7 @@ const errorWith = (err, info) => {
     return err
 }
 
-const compile = async (sourceCode, options = {}) => {
+const compile = async (sourceCode, topLevelTransform, options = {}) => {
     let last = null
     const tracer = {
         trace: evt => {
@@ -124,7 +93,10 @@ const compile = async (sourceCode, options = {}) => {
     const topLevelFuncs = await topLevelTransform(topLevel, options)
     const output = [...topLevelFuncs, ...js].join("\n")
 
-    return [jsb(output, prettyOptions), ast]
+    return {
+        code: jsb(output, prettyOptions),
+        ast
+    }
 }
 
 module.exports = compile

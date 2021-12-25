@@ -3,7 +3,7 @@ const tea = require("../compile.js")
 module.exports = {
     transform: async (code, id) => {
         if (id.endsWith(".tea") === true) {
-            const result = await tea(code, { es6: true })
+            const result = await tea(code, { target: "es6" })
 
             if (result instanceof Error) {
                 throw result

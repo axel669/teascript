@@ -31,16 +31,39 @@ const [compiledJS, ast] = result
 
 ### Run Script
 ```
-tea file <input file>
+tea file <input file> <options>
 ```
 ### Transpile File
 ```
-tea file <input file> <dest file>
-tea file -c <input file>
+tea file <input file> <dest file> <options>
+tea file -c <input file> <options>
 ```
 ### Transpile Directory
 ```
-tea file -d <input dir> <dest dir>
+tea file -d <input dir> <dest dir> <options>
+```
+
+### CLI Options
+```
+-c, -compile
+Output file will be in the same dir as the source file
+
+-d, -dir
+Compile directory with output file structure mirroring source directory
+
+-target=es6|node
+Code output target. es6 will use import statements for the built-in functions,
+```
+
+## Browser Usage
+Include the script `build/browser-tea.js` on the page.
+```javascript
+const {code, ast} = teascript(
+    sourceCode,
+    options = {
+        target?: "es6" | "browser"
+    }
+)
 ```
 
 ## TODO
