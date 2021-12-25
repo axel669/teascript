@@ -1,4 +1,4 @@
-const tea = require("../compile.js")
+const tea = require("../api.js")
 
 module.exports = {
     transform: async (code, id) => {
@@ -9,7 +9,7 @@ module.exports = {
                 throw result
             }
 
-            return result[0]
+            return result.code
         }
         return code
     }

@@ -1,4 +1,4 @@
-const tea = require("../compile.js")
+const tea = require("../api.js")
 
 module.exports = {
     script: async (input) => {
@@ -8,7 +8,7 @@ module.exports = {
             if (result instanceof Error) {
                 throw result
             }
-            return { code: result[0] }
+            return { code: result.code }
         }
         return { code: input.content }
     }
