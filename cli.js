@@ -5,42 +5,12 @@ const path = require("path")
 
 const glob = require("glob")
 
-const compile = require("./compile.js")
+const teascript = require("./api.js")
 const {$safe} = require("./safe.js")
 
-const topLevelTransform = async (sources, options) => {
-    const { target, browser } = options
-    const src = [...sources]
-
-    if (target === "es6") {
-        return src.map(
-            src => `import ${src} from "@axel669/teascript/funcs/${src}.js"`
-        )
-    }
-
-    if (target === "browser") {
-        return await Promise.all(
-            src.map(
-                (name) => fs.readFile(
-                    path.resolve(
-                        __dirname,
-                        `funcs/${name}.js`
-                    ),
-                    "utf8"
-                ).then(
-                    content => content.replace(/^module.+/m, "").trim()
-                )
-            )
-        )
-    }
-
-    return src.map(
-        src => `const ${src} = require("@axel669/teascript/funcs/${src}.js")`
-    )
-}
 const loadCode = async (info) => {
     const sourceCode = await fs.readFile(info.args[0], "utf8")
-    return await compile(sourceCode, topLevelTransform, info.options)
+    return await teascript(sourceCode, info.options)
 }
 const commands = {
     file: async (info) => {

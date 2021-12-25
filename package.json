@@ -2,7 +2,7 @@
   "name": "@axel669/teascript",
   "version": "0.22.6",
   "description": "",
-  "main": "compile.js",
+  "main": "api.js",
   "scripts": {
     "compile:grammar": "peggy --trace -o parser.js grammar/teascript.peggy",
     "test:module": "node cli.js test/input/code.tea -debug",
