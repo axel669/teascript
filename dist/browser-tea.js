@@ -16912,7 +16912,10 @@ var teascript = (function () {
       const topLevelFuncs = await topLevelTransform(topLevel, options);
       const output = [...topLevelFuncs, ...js].join("\n");
 
-      return [jsb(output, prettyOptions), ast]
+      return {
+          code: jsb(output, prettyOptions),
+          ast
+      }
   };
 
   var compile_1 = compile;

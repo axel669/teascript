@@ -25,7 +25,7 @@ const preload = fs.readdirSync(root)
 export default {
     input: "./browser/main.js",
     output: {
-        file: "build/browser-tea.js",
+        file: "dist/browser-tea.js",
         format: "iife",
         name: "teascript"
     },
