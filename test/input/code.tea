@@ -24,6 +24,15 @@ console.log(
     |> (n: fn => n)
 )
 
+console.log(
+    do {
+        guard Math.random() < 0.5 {
+            => 10
+        }
+        => 100
+    }
+)
+
 ###
 test
 ###

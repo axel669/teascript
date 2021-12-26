@@ -516,8 +516,8 @@ ShortArgList
     }
 
 Do
-    = "do" __s "{" _ body:Exprs _ "}" {
-        return token.do({body})
+    = "do" __s "{" _ body:Exprs __ value:Return _ "}" {
+        return token.do({body, value})
     }
 
 Return

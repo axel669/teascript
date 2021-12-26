@@ -142,13 +142,14 @@ const generateCode = (source) => {
         "do": token => {
             scope.unshift([])
             const body = genJS(token.body).join("\n")
+            const value = genJS(token.value)
 
             const extra = scope[0].map(
                 name => `let ${name} = null`
             ).join("\n")
             scope.shift()
 
-            return `(function(){\n${extra}\n${body}\n}())`
+            return `(function(){\n${extra}\n${body}\n${value}\n}())`
         },
         "dotAccess": token => {
             const {name, target, optional} = token
@@ -331,21 +332,6 @@ const generateCode = (source) => {
                     }
                 )
             ]
-            // const sequence = genJS([
-            //     {
-            //         type: "assign",
-            //         left: refTok,
-            //         right: list[0],
-            //     },
-            //     ...list.slice(1).map(
-            //         expr => ({
-            //             type: "assign",
-            //             op: "<-",
-            //             left: refTok,
-            //             right: expr,
-            //         })
-            //     )
-            // ]).join(", ")
             return `(${sequence.join(", ")})`
         },
         "reactive": token => `$: ${genJS(token.expr)}`,

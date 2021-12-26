@@ -75,6 +75,9 @@ See the language ref (in the [ref](/ref) folder) for the future plans.
 
 ## Changelog
 
+### 0.22.8
++ fix for do expressions
+
 ### 0.22.7
 + update exposed API
 + made cli options fit more standard styles
