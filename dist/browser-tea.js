@@ -5911,8 +5911,8 @@ var teascript = (function () {
     var peg$f49 = function(head, tail) {
             return list(head, tail, 2)
         };
-    var peg$f50 = function(body) {
-            return token.do({body})
+    var peg$f50 = function(body, value) {
+            return token.do({body, value})
         };
     var peg$f51 = function(expr) {
             return token.return({expr})
@@ -11588,7 +11588,7 @@ var teascript = (function () {
 
     function peg$parseDo() {
       var startPos = peg$currPos;
-      var s0, s1, s2, s3, s5, s7;
+      var s0, s1, s2, s3, s5, s6, s7, s9;
 
       peg$tracer.trace({
         type: "rule.enter",
@@ -11618,17 +11618,29 @@ var teascript = (function () {
             peg$parse_();
             s5 = peg$parseExprs();
             if (s5 !== peg$FAILED) {
-              peg$parse_();
-              if (input.charCodeAt(peg$currPos) === 125) {
-                s7 = peg$c4;
-                peg$currPos++;
-              } else {
-                s7 = peg$FAILED;
-                if (peg$silentFails === 0) { peg$fail(peg$e8); }
-              }
-              if (s7 !== peg$FAILED) {
-                peg$savedPos = s0;
-                s0 = peg$f50(s5);
+              s6 = peg$parse__();
+              if (s6 !== peg$FAILED) {
+                s7 = peg$parseReturn();
+                if (s7 !== peg$FAILED) {
+                  peg$parse_();
+                  if (input.charCodeAt(peg$currPos) === 125) {
+                    s9 = peg$c4;
+                    peg$currPos++;
+                  } else {
+                    s9 = peg$FAILED;
+                    if (peg$silentFails === 0) { peg$fail(peg$e8); }
+                  }
+                  if (s9 !== peg$FAILED) {
+                    peg$savedPos = s0;
+                    s0 = peg$f50(s5, s7);
+                  } else {
+                    peg$currPos = s0;
+                    s0 = peg$FAILED;
+                  }
+                } else {
+                  peg$currPos = s0;
+                  s0 = peg$FAILED;
+                }
               } else {
                 peg$currPos = s0;
                 s0 = peg$FAILED;
@@ -16473,13 +16485,14 @@ var teascript = (function () {
           "do": token => {
               scope.unshift([]);
               const body = genJS(token.body).join("\n");
+              const value = genJS(token.value);
 
               const extra = scope[0].map(
                   name => `let ${name} = null`
               ).join("\n");
               scope.shift();
 
-              return `(function(){\n${extra}\n${body}\n}())`
+              return `(function(){\n${extra}\n${body}\n${value}\n}())`
           },
           "dotAccess": token => {
               const {name, target, optional} = token;
@@ -16662,21 +16675,6 @@ var teascript = (function () {
                       }
                   )
               ];
-              // const sequence = genJS([
-              //     {
-              //         type: "assign",
-              //         left: refTok,
-              //         right: list[0],
-              //     },
-              //     ...list.slice(1).map(
-              //         expr => ({
-              //             type: "assign",
-              //             op: "<-",
-              //             left: refTok,
-              //             right: expr,
-              //         })
-              //     )
-              // ]).join(", ")
               return `(${sequence.join(", ")})`
           },
           "reactive": token => `$: ${genJS(token.expr)}`,

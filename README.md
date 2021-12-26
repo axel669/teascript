@@ -67,7 +67,7 @@ Include the script `build/browser-tea.js` on the page or use the CDN link.
 The browser script adds the `teascript` function to the global scope.
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/axel669/teascript@v0.22.7/dist/browser-tea.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/axel669/teascript@v0.22.8/dist/browser-tea.js"></script>
 ```
 
 ## TODO
