@@ -67,13 +67,16 @@ Include the script `build/browser-tea.js` on the page or use the CDN link.
 The browser script adds the `teascript` function to the global scope.
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/axel669/teascript@v0.22.8/dist/browser-tea.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/axel669/teascript@v0.22.9/dist/browser-tea.js"></script>
 ```
 
 ## TODO
 See the language ref (in the [ref](/ref) folder) for the future plans.
 
 ## Changelog
+
+### 0.22.9
++ fix for backticks in template string output
 
 ### 0.22.8
 + fix for do expressions

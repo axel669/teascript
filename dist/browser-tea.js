@@ -16724,7 +16724,7 @@ var teascript = (function () {
 
               const jsParts = parts.map(
                   part => (typeof part === "string")
-                      ? part
+                      ? part.replace(/`/g, "\\`")
                       : `\${${genJS(part)}}`
               );
 
