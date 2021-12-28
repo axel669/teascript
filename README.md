@@ -75,6 +75,10 @@ See the language ref (in the [ref](/ref) folder) for the future plans.
 
 ## Changelog
 
+### 0.22.10
++ add `args` variable to scope in functions
++ reworked cli to function properly
+
 ### 0.22.9
 + fix for backticks in template string output
 
