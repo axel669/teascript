@@ -29,16 +29,16 @@ const generateCode = (source) => {
     const argLine = (token, index) => {
         const { type, name, value } = token
         if (type === "var") {
-            return `const ${name} = _args[${index}]`
+            return `const ${name} = args[${index}]`
         }
 
         if (name.type === "var") {
-            return `const ${name.name} = _args[${index}] ?? ${genJS(value)}`
+            return `const ${name.name} = args[${index}] ?? ${genJS(value)}`
         }
 
         const array = (name.type === "arraydest")
         const def = array ? "[]" : "{}"
-        const source = `const ${value.name} = _args[${index}] ?? ${def}`
+        const source = `const ${value.name} = args[${index}] ?? ${def}`
         const names = genJS(name.names).join(", ")
         const des = array ? `[${names}]` : `{${names}}`
         return `${source}\nconst ${des} = ${value.name}`
@@ -195,7 +195,7 @@ const generateCode = (source) => {
             ).join("\n")
             scope.shift()
 
-            return `${funcName} (..._args) {\n${extra}\n${funcBody}\n${returnValue}\n}`
+            return `${funcName} (...args) {\n${extra}\n${funcBody}\n${returnValue}\n}`
         },
         "for": token => {
             const {name, body, source, range, wait} = token

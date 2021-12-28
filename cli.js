@@ -2,6 +2,9 @@
 
 const fs = require("fs-extra")
 const path = require("path")
+// const {Worker} = require("worker_threads")
+const Module = require("module")
+const vm = require("vm")
 
 const glob = require("glob")
 
@@ -31,9 +34,29 @@ const commands = {
             console.error(compileResult)
             return
         }
-        const [outputCode] = compileResult
-        const f = new Function(outputCode)
-        f()
+        const {code} = compileResult
+
+        const filename = path.resolve(info.args[0])
+        const module = new Module("eval")
+        const req = (path) => Module._load(path, module, true)
+
+        module.filename = info.args[0]
+        module.paths = Module._nodeModulePaths(
+            process.cwd()
+        )
+        req.paths = module.paths
+        req.resolve = (request) => Module._resolveFilename(request, module)
+        req.main = require.main
+        req.cache = require.cache
+
+        const sandbox = {
+            console,
+            module,
+            require: req,
+            __filename: filename,
+            __dirname: path.dirname(filename),
+        }
+        vm.runInContext(code, vm.createContext(sandbox))
     },
     dir: async (info) => {
         const {args, options} = info

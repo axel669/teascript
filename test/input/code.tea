@@ -1,38 +1,6 @@
-console.log(
-    [0 -> 1000]
-        .filter(
-            fn{n} => (n % 3) == 0 || (n % 5) == 0
-        )
-        .reduce(
-            fn{total, n} => total + n
-            0
-        )
-)
-
-async fn test {
-    @items
-
-    => await.all items.map(
-        fn{item} => item.asyncThing()
-    )
+fn test {
+    console.log(args)
 }
 
-console.log(
-    10
-    |> (n: n + 1)
-    |> (n: (n * 2) + n)
-    |> (n: fn => n)
-)
-
-console.log(
-    do {
-        guard Math.random() < 0.5 {
-            => 10
-        }
-        => 100
-    }
-)
-
-###
-test
-###
+test(1, 2, 3, 4)
+test([0 -> 10])
