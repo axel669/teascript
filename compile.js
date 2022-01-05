@@ -1,19 +1,7 @@
-// const fs = require("fs-extra")
-// const path = require("path")
-
-const jsb = require("js-beautify")
 const teascript = require("./parser.js")
 const generateCode = require("./grammar/gen-js.js")
 
 const {_safe, $safe} = require("./safe.js")
-
-const prettyOptions = {
-    indent_size: 4,
-    operator_position: "after-newline",
-    wrap_line_length: 80,
-    break_chained_methods: true,
-    jslint_happy: true,
-}
 
 const pmax = (a, b) => {
     if (a === null) {
@@ -67,6 +55,7 @@ const errorWith = (err, info) => {
 }
 
 const compile = async (sourceCode, topLevelTransform, options = {}) => {
+    const {format} = options
     let last = null
     const tracer = {
         trace: evt => {
@@ -94,7 +83,8 @@ const compile = async (sourceCode, topLevelTransform, options = {}) => {
     const output = [...topLevelFuncs, ...js].join("\n")
 
     return {
-        code: jsb(output, prettyOptions),
+        // code: prettier.format(output, prettyOptions),
+        code: format(output),
         ast
     }
 }

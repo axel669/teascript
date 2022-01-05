@@ -1,19 +1,29 @@
 const _range = require("@axel669/teascript/funcs/_range.js")
-console.log(_range(0, 1000, 1)
-    .filter(function (n) {
-        return (n % 3) === 0 || (n % 5) === 0
-    })
-    .reduce(function (total, n) {
-        return total + n
-    }, 0))
-async function test(..._args) {
-
-    const items = _args[0]
-    return await Promise.all(items.map(function (item) {
-        return item.asyncThing()
-    }))
+const _at = require("@axel669/teascript/funcs/_at.js")
+function rnd(...args) {
+    return Math.random() < 0.5
 }
-console.log((_ref1 = 10, _ref1 = _ref1 + 1, _ref1 = (_ref1 * 2) + _ref1, _ref1 =
-    function () {
-        return _ref1
-    }))
+let board = _range(0, 50, 1, (x) => _range(0, 50, 1, (x) => rnd()))
+function nextGeneration(...args) {
+    const alive = args[0]
+    const neighbors = args[1]
+    return alive
+}
+function iteration(...args) {
+    const board = args[0]
+    return board.map(function (row, y) {
+        return row.map(function (alive, x) {
+            return nextGeneration(alive, [
+                _at(_at(board, y - 1, false), x - 1, true),
+                _at(_at(board, y - 1, false), x, true),
+                _at(_at(board, y - 1, false), x + 1, true),
+                _at(_at(board, y, false), x + 1, false),
+                _at(_at(board, y + 1, false), x + 1, true),
+                _at(_at(board, y + 1, false), x, true),
+                _at(_at(board, y + 1, false), x - 1, true),
+                _at(_at(board, y, false), x - 1, false),
+            ])
+        })
+    })
+}
+iteration(board)

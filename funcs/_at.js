@@ -1,4 +1,7 @@
-const _at = (source, key) => {
+const _at = (source, key, optional) => {
+    if (optional === true && source === undefined) {
+        return undefined
+    }
     if (typeof key === "string" || key >= 0) {
         return source[key]
     }

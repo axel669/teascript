@@ -1,5 +1,17 @@
+const fs = require("fs").promises
+const path = require("path")
+
+const prettier = require("prettier")
+const babelParser = require("prettier/parser-babel")
+
 const compile = require("./compile.js")
 
+const prettyOptions = {
+    parser: "babel",
+    tabWidth: 4,
+    arrowParens: "always",
+    semi: false,
+}
 const topLevelTransform = async (sources, options) => {
     const { target } = options
     const src = [...sources]
@@ -32,6 +44,13 @@ const topLevelTransform = async (sources, options) => {
 }
 
 const teascript = (sourceCode, options) =>
-    compile(sourceCode, topLevelTransform, options)
+    compile(
+        sourceCode,
+        topLevelTransform,
+        {
+            ...options,
+            format: (code) => prettier.format(code, prettyOptions)
+        }
+    )
 
 module.exports = teascript

@@ -69,11 +69,10 @@ const generateCode = (source) => {
         },
         "arrayAccess": token => {
             const {target, value, optional} = token
-            const op = optional ? "?." : ""
 
             topLevel.add("_at")
 
-            return `_at(${genJS(target)},${genJS(value)})`
+            return `_at(${genJS(target)},${genJS(value)}, ${optional})`
         },
         "arraydest": token => {
             const { names, rest } = token

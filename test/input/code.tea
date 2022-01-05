@@ -1,6 +1,37 @@
-fn test {
-    console.log(args)
+fn rnd {
+    => Math.random() < 0.5
 }
+mut board <+ [
+    [rnd() from x : 0 -> 50]
+    from x : 0 -> 50
+]
 
-test(1, 2, 3, 4)
-test([0 -> 10])
+fn nextGeneration {
+    @alive
+    @neighbors
+
+    # console.log(neighbors)
+    => alive
+}
+fn iteration {
+    @board
+
+    => board.map(
+        fn{row, y} => row.map(
+            fn{alive, x} => nextGeneration(
+                alive
+                [
+                    board[y - 1]?[x - 1]
+                    board[y - 1]?[x]
+                    board[y - 1]?[x + 1]
+                    board[y][x + 1]
+                    board[y + 1]?[x + 1]
+                    board[y + 1]?[x]
+                    board[y + 1]?[x - 1]
+                    board[y][x - 1]
+                ]
+            )
+        )
+    )
+}
+iteration(board)

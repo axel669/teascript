@@ -1,5 +1,12 @@
 import compile from "../compile.js"
 
+const prettyOptions = {
+    parser: "babel",
+    plugins: prettierPlugins,
+    tabWidth: 4,
+    arrowParens: "always",
+    semi: false,
+}
 const topLevelTransform = async (sources, options) => {
     const { target, browser } = options
     const src = [...sources]
@@ -22,6 +29,15 @@ const topLevelTransform = async (sources, options) => {
 }
 
 const browserCompile = (source, options = {}) =>
-    compile(source, topLevelTransform, options)
+    compile(
+        source,
+        topLevelTransform,
+        {
+            ...options,
+            format: (code) => prettier.format(code, prettyOptions)
+        }
+    )
+
+console.log(prettyOptions)
 
 export default browserCompile

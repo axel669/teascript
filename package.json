@@ -1,10 +1,10 @@
 {
   "name": "@axel669/teascript",
-  "version": "0.22.10",
+  "version": "0.22.11",
   "description": "",
   "main": "api.js",
   "scripts": {
-    "compile:grammar": "peggy --trace -o parser.js grammar/teascript.peggy",
+    "compile:grammar": "peggy --cache --trace -o parser.js grammar/teascript.peggy",
     "test:module": "node cli.js test/input/code.tea -debug",
     "run:module": "node cli.js test/input/code.tea",
     "compile:browser": "rollup -c browser/rollup.config.js"
@@ -17,7 +17,7 @@
   "dependencies": {
     "fs-extra": "^10.0.0",
     "glob": "^7.2.0",
-    "js-beautify": "^1.14.0"
+    "prettier": "^2.5.1"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.1",

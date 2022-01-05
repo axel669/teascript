@@ -64,9 +64,12 @@ insert require calls.
 
 ## Browser Usage
 Include the script `build/browser-tea.js` on the page or use the CDN link.
-The browser script adds the `teascript` function to the global scope.
+The browser script adds the `teascript` function to the global scope, and relies
+on the browser version of prettier.
 
 ```html
+<script src="https://unpkg.com/prettier@2.5.1/standalone.js"></script>
+<script src="https://unpkg.com/prettier@2.5.1/parser-babel.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/axel669/teascript@v0.22.9/dist/browser-tea.js"></script>
 ```
 
@@ -74,6 +77,12 @@ The browser script adds the `teascript` function to the global scope.
 See the language ref (in the [ref](/ref) folder) for the future plans.
 
 ## Changelog
+
+### 0.22.11
++ fixed bug in chained optional array access
++ vastly improved parser speed
++ went back to prettier since I can afford the extra time to load it again,
+    and it has what I think is better output
 
 ### 0.22.10
 + add `args` variable to scope in functions
