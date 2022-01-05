@@ -13962,8 +13962,6 @@ var teascript = (function () {
           }
       );
 
-  console.log(prettyOptions);
-
   return browserCompile;
 
 })();

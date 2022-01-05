@@ -38,6 +38,4 @@ const browserCompile = (source, options = {}) =>
         }
     )
 
-console.log(prettyOptions)
-
 export default browserCompile
