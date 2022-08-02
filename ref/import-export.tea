@@ -1,13 +1,14 @@
 ###
-import works the same as in JS.
+import is now reverse order from regular JS (import <> into <>)
+import * as x is now import*
 export has syntactic sugar for the object-style export syntax
 ###
 
 import "some-core-thing.js"
 
-import fs from "fs"
-import {Worker} from "worker_threads"
-import * as thing from "some-lib"
+import "fs" into fs
+import "worker_threads" into { Worker }
+import* "some-lib" into thing
 
 export default thing
 export let value <+ 0

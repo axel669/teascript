@@ -78,6 +78,15 @@ See the language ref (in the [ref](/ref) folder) for the future plans.
 
 ## Changelog
 
+### 0.22.13
++ changed all imports to "import...into"
++ argument names on array comprehensions are optional now
+
+### 0.22.12
++ added "import...into"
++ don't know when, but bitwise ops added
++ updated guard when used with reactive statements
+
 ### 0.22.11
 + fixed bug in chained optional array access
 + vastly improved parser speed

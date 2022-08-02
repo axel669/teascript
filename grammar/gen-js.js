@@ -236,10 +236,25 @@ const generateCode = (source) => {
             }
 
             const ifBody = genJS(body).join("\n")
-            const ifValue = genJS(value)
+            const ifValue = value ? genJS(value) : ""
             return `if (${cond}) {\n${ifBody}\n${ifValue}\n}`
         },
-        "import": token => token.source,
+        "import": token => {
+            if (token.def !== undefined) {
+                const star = (token.star !== null) ? "* as " : ""
+                const target = `${star}${token.def}`
+                return `import ${target} from ${genJS(token.lib)}`
+            }
+
+            if (token.targets !== undefined) {
+                return (
+                    `import ${genJS(token.targets)} from ${genJS(token.lib)}`
+                    .replace(/: /g, " as ")
+                )
+            }
+
+            return `import ${genJS(token.lib)}`
+        },
         "instance": token =>
             `(${genJS(token.expr)} instanceof ${genJS(token.target)})`,
         "let": token => {
@@ -419,10 +434,8 @@ const generateCode = (source) => {
         },
         "typeof": token => `typeof(${genJS(token.expr)})`,
         "unary": token => {
-            const {op, expr, func, mode} = token
+            const {op, expr, func, mode, chain} = token
 
-            if (func === true) {
-            }
             const wrapper = (mode !== undefined) ? `Promise${mode}` : ""
 
             return `${op} ${wrapper}(${genJS(expr)})`

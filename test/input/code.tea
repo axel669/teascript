@@ -1,9 +1,18 @@
+import "test" into wat
+import "test" into {
+    a
+    b
+    c as d
+}
+import* "wat" into bigWat
+import "testing"
+
 fn rnd {
     => Math.random() < 0.5
 }
 mut board <+ [
-    [rnd() from x : 0 -> 50]
-    from x : 0 -> 50
+    [rnd() from 0 -> 50]
+    from 0 -> 50
 ]
 
 fn nextGeneration {
@@ -35,3 +44,11 @@ fn iteration {
     )
 }
 iteration(board)
+
+$: guard x > 0 {
+    console.log(x ** 2)
+}
+
+# let list <+ await fetch("test")
+#     -> n : n.json()
+#     -> n : n.reverse()

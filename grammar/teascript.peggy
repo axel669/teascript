@@ -154,7 +154,7 @@ Debugger
     = "debugger" {return token.debugger()}
 
 Reactive
-    = "$:" __s expr:Statement {
+    = "$:" __s expr:(Do / Assignment / IfRx) {
         return token.reactive({expr})
     }
 
@@ -346,17 +346,14 @@ Finally
     }
 
 Import
-    = source:$("import" __s Word (_ "," __s Destruct)? __s "from" __s String) {
-        return token.import({source})
+    = "import" __s lib:String __s "into" __s targets:Destruct {
+        return token.import({lib, targets})
     }
-    / source:$("import" __s Destruct __s "from" __s String) {
-        return token.import({source})
+    / "import" star:"*"? __s lib:String __s "into" __s def:Word {
+        return token.import({lib, def, star})
     }
-    / source:$("import" __s String) {
-        return token.import({source})
-    }
-    / source:$("import" __s "*" __s "as" __s Word __s "from" __s String) {
-        return token.import({source})
+    / "import" __s lib:String {
+        return token.import({lib})
     }
 
 Export
@@ -543,6 +540,13 @@ If
             body: [],
         })
     }
+IfRx
+    = ("if" / "guard") __s condition:(Logical / Compare) _s "{" __ body:Exprs __"}" {
+        return token.if({
+            condition,
+            body,
+        })
+    }
 
 For
     = "for" wait:(__s "await")? __s name:Word __s ":" __s range:Range __s "{" __ body:Exprs __ "}" {
@@ -586,6 +590,13 @@ Array
             range,
             arg,
             body
+        })
+    }
+    / "[" _ body:Expr __ "from" __s range:Range _ "]" {
+        return token.array({
+            range,
+            body,
+            arg: "",
         })
     }
 

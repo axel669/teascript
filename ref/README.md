@@ -31,10 +31,6 @@ This is pretty new, there aren't any frequent questions (yet?).
 
 ## Removed Features
 
-### Bitwise Operators (Temporary)
-I couldn't decide how I wanted them to look, so they aren't in currently but
-they will be added once I can decide how they should look.
-
 ### Classes
 I won't be adding classes to the language, don't bother asking.
 
